@@ -11,6 +11,18 @@ shinobu_greeting = ["Hi, ",
 
 shinobu_pat = [""]
 
+def read_config():
+    import json
+    infile = open('shinobu_config.json', 'r')
+    jsonstring = infile.read()
+    return json.loads(jsonstring)
+
+def load_config():
+    modules_to_load = []
+    for module in read_config().modules:
+        modules_to_load.append(module)
+    map(__import__, modules_to_load)
+
 def choose_random(resource_list:list):
     return resource_list[floor(len(resource_list)*random())]
 
@@ -28,16 +40,4 @@ def read_pr():
     jsonstring = infile.read()
     return json.loads(jsonstring)
 
-
-    # {"even lift":["fite me irl, i swear on me mum i'll hook ya right in the gobber"],
-    #              "even drift":["wew lad"],
-    #              "re+":["wew lad, careful with that autism"],
-    #              "kek":["lel"],
-    #              "lol":["kek"],
-    #              "overwatch":[
-    #                  "Overwatch is the best, my favorite hero is Widowmaker.  What's an objective?",
-    #                  "Ya bb. Bastion is the best hero.  Fuck u Mercy why u not healing >:((("
-    #              ],
-    #              "h(ello|i|ey|iya)":["sup :)", "hey =)", "how's it going", "hi :3", "hi :)", "hello friendo :^)"]
-    #              }
 pair_response = read_pr()

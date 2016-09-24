@@ -61,3 +61,7 @@ def PairedResponse(func):
                 return response
         return func(message)
     return pair_responder
+
+@ShinobuTextBasedResponses.PairedResponse
+def text_based_response(message:discord.Message):
+    return None

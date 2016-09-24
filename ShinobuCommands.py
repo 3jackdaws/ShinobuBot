@@ -1,32 +1,48 @@
 import discord
 import resources
 
-shinobu = discord.Client()
+version = "1.0.5"
 
-def get_instance():
-    return shinobu
+async def accept_message(message:discord.Message):
+    if message.content[0] is ".":
+        command = message.content.rsplit(" ")[0][1:]
+        arguments = " ".join(message.content.rsplit(" ")[1:])
+        print(command, arguments)
+        if command in ShinobuCommandList:
+            await ShinobuCommandList[command](message, arguments)
 
+def accept_shinobu_instance(instance):
+    global shinobu
+    shinobu = instance
+
+
+shinobu = None
 ShinobuCommandList = {}
 ShinobuCommandDesc = {}
 
 
 
 def ShinobuCommand(description):
+    global ShinobuCommandList
+    global ShinobuCommandDesc
     def find_command(command_function):
         ShinobuCommandList[command_function.__name__] = command_function
         ShinobuCommandDesc[command_function.__name__] = description
         return command_function
     return find_command
 
+def author_is_owner(message):
+    return message.author.id == shinobu.owner
+
 @ShinobuCommand("Lists all of the available commands")
 async def commands(message:discord.Message, arguments:str):
-    output = "```java\n"
-    for command in ShinobuCommandList:
+    output = ""
+    for command in sorted(ShinobuCommandList):
         desc = "No description provided"
         if command in ShinobuCommandDesc:
             desc = ShinobuCommandDesc[command]
-        output+= (("\"" + command + "\"").ljust(10) + " - " + desc + "\n")
-    await shinobu.send_message(message.channel, output + "```")
+        output+= (("`" + command + "`").ljust(10) + " - " + desc + "\n")
+    await shinobu.send_message(message.channel, output + "")
 
 @ShinobuCommand("Echos the text after the command to the same channel")
 async def echo(message:discord.Message, arguments:str):
@@ -37,6 +53,13 @@ async def broadcast(message:discord.Message, arguments:str):
     for channel in shinobu.get_all_channels():
         if channel.is_default:
             await shinobu.send_message(channel, arguments)
+
+@ShinobuCommand("Lists all loaded modules")
+async def mods(message:discord.Message, arguments:str):
+    output = ""
+    for module in shinobu.loaded_modules:
+        output += (module.__name__ + "\n")
+    await shinobu.send_message(message.channel, output)
 
 @ShinobuCommand("Tells Shinobu to learn a paired response")
 async def learn(message:discord.Message, arguments:str):
@@ -69,3 +92,12 @@ async def tell(message:discord.Message, arguments:str):
     sender = message.author.id
     for channel in message.channel_mentions:
         await shinobu.send_message(channel, ("<@"+sender + "> says:\n") + " ".join(given_message))
+
+@ShinobuCommand("Tells Shinobu to reload her configuration")
+async def reload(message:discord.Message, arguments:str):
+    if not author_is_owner(message):
+        await shinobu.send_message(message.channel, ">tries to reload config\n>isn't owner\n>mfw no face")
+        return
+    start = await shinobu.send_message(message.channel, "Reloading config")
+    mods = shinobu.load_config()
+    await shinobu.edit_message(start, "Loaded {0} modules".format(mods))
