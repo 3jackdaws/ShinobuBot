@@ -58,29 +58,53 @@ def register_commands(ShinobuCommand):
             add_response(components[0], components[1])
             write_patterns()
 #####NEXT COMMAND
+    @ShinobuCommand("Tells Shinobu to unlearn a paired response")
+    async def unlearn(message: discord.Message, arguments: str):
+        for pair in patterned_responses:
+            if pair[0] == arguments:
+                patterned_responses.remove(pair)
+        write_patterns()
+
+#####NEXT COMMAND
+    @ShinobuCommand("Tells Shinobu to unlearn a paired response and never learn it again")
+    async def block(message: discord.Message, arguments: str):
+        for pair in patterned_responses:
+            if pair[0] == arguments:
+                pair[1] = None
+        write_patterns()
+#####NEXT COMMAND
+    @ShinobuCommand("Tells Shinobu to unlearn a paired response and never learn it again")
+    async def relookup(message: discord.Message, arguments: str):
+        for pair in patterned_responses:
+            if pair[1] == None: continue
+            regexp = "(^|[^a-z])" + pair[0] + "($|[^a-z])"
+            if re.search(regexp, arguments):
+                await shinobu.send_message(message.channel, pair.__str__())
+                return
+        await shinobu.send_message(message.channel, "No matches")
 
 def add_response(regex, response, raw=False):
     global patterned_responses
     inserted = False
     for pair in patterned_responses:
         if regex == pair[0]:
-            pair[1].append(response)
+            if pair[1] != None:
+                pair[1].append(response)
             inserted = True
     if not inserted:
         patterned_responses.append([regex,[response]])
-    version = "cat"
-    test = get_reponse(regex)
-    print("wow")
+
 
 def get_reponse(message):
     for pair in patterned_responses:
+        if pair[1] == None: continue
         regexp = "(^|[^a-z])" + pair[0] + "($|[^a-z])"
         if re.search(regexp, message):
             return choose_from(pair[1])
     return None
 
 
-version = "0.2.0"
+version = "1.0.0"
 shinobu = None
 patterned_responses = []
 compiled_patterns = []

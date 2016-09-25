@@ -24,18 +24,6 @@ def register_commands(ShinobuCommand):
             if channel.is_default:
                 await shinobu.send_message(channel, arguments)
 
-    @ShinobuCommand("Tells Shinobu to unlearn a paired response")
-    async def unlearn(message:discord.Message, arguments:str):
-        if arguments in resources.pair_response:
-            del resources.pair_response[arguments]
-        resources.write_pr()
-
-    @ShinobuCommand("Tells Shinobu to unlearn a paired response and never learn it again")
-    async def block(message:discord.Message, arguments:str):
-        if arguments in resources.pair_response:
-            resources.pair_response[arguments] = None
-        resources.write_pr()
-
     @ShinobuCommand("Posts a message in a channel that a user doesn't have access to")
     async def tell(message:discord.Message, arguments:str):
         originating_server = message.server
