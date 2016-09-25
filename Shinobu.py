@@ -123,10 +123,12 @@ async def on_message(message:discord.Message):
                     shinobu.idle = False
                     await shinobu.change_status(idle=False)
                     await shinobu.send_message(message.channel, "ShinobuBot on {0} checking in".format(socket.gethostname()))
+                    print("UNPAUSED")
                 else:
                     shinobu.idle = True
                     await shinobu.change_status(idle=True)
                     await shinobu.send_message(message.channel, "Paused")
+                    print("PAUSED")
 
         if shinobu.idle == True: return
         if message.content[0] is ".":
