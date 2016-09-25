@@ -35,7 +35,7 @@ emojo_lookup = {1:":one:",
                 8:":eight:",
                 9:":nine:",
                 'X':":doughnut:",
-                'O':":sunny:"}
+                'O':":sun_with_face:"}
 
 async def help(message:discord.Message, arguments:str):
     helpstring = "Shinobu Tic Tac Toe Module Help\n" \
