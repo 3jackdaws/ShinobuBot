@@ -30,7 +30,7 @@ def register_commands(ShinobuCommand):
         given_message = message.content.rsplit(" ")[2:]
         sender = message.author.id
         for channel in message.channel_mentions:
-            await shinobu.send_message(channel, ("<@"+sender + "> says:\n") + " ".join(given_message))
+            await shinobu.send_message(channel, ("<@"+sender + "> told me to say:\n") + " ".join(given_message), tts=True)
 
     @ShinobuCommand("Posts a message in a channel that a user doesn't have access to")
     async def who(message: discord.Message, arguments: str):

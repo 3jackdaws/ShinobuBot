@@ -32,12 +32,14 @@ def load_all(self):
     return len(self.loaded_modules)
 
 def load_safemode_mods(self):
+    global ShinobuCommandDesc
+    global ShinobuCommandList
+    ShinobuCommandDesc = {}
+    ShinobuCommandList = {}
     self.loaded_modules = []
     for modname in self.config["safemode"]:
-        mod = __import__(modname)
-        mod.accept_shinobu_instance(shinobu)
-        mod.register_commands
-        self.loaded_modules.append(mod)
+        shinobu.reload_module(modname)
+    shinobu.command_description = ShinobuCommandDesc
     return len(self.loaded_modules)
 
 def ShinobuCommand(description):
@@ -48,7 +50,6 @@ def ShinobuCommand(description):
         ShinobuCommandList[command_function.__name__] = command_function
         if not command_function.__module__ in ShinobuCommandDesc:
             ShinobuCommandDesc[command_function.__module__] = {}
-
         ShinobuCommandDesc[command_function.__module__][command_function.__name__] = description
         return command_function
     return find_command

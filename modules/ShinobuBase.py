@@ -7,13 +7,12 @@ async def accept_message(message:discord.Message):
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Lists all of the available commands")
     async def commands(message: discord.Message, arguments: str):
-        ShinobuCommandDesc = shinobu.command_description
         output = "***COMMANDS***\n"
-        for module in sorted(ShinobuCommandDesc):
+        for module in sorted(shinobu.command_description):
             output += ("\n  - - -  **{0}**  - - -  \n".format(module))
-            for command in sorted(ShinobuCommandDesc[module]):
+            for command in sorted(shinobu.command_description[module]):
                 desc = "No description provided"
-                desc = ShinobuCommandDesc[module][command]
+                desc = shinobu.command_description[module][command]
                 output += (("." + command + "").ljust(10) + " - " + desc + "\n")
         await shinobu.send_message(message.channel, output + "")
 
@@ -61,11 +60,11 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand("Tells Shinobu to load or reload a specified module")
     async def unload(message: discord.Message, arguments: str):
 
-        if not author_is_owner(message):
-            await shinobu.send_message(message.channel, ">tries to load mod\n>isn't owner")
+        if not shinobu.author_is_owner(message):
+            await shinobu.send_message(message.channel, ">tries to unload mod\n>isn't owner")
             return
         start = await shinobu.send_message(message.channel, "Unloading module {0}".format(arguments))
-        if shinobu.unload_mod(arguments):
+        if shinobu.unload_module(arguments):
             text = "Unloaded module {0}"
         else:
             text = "Failed unloading module {0}"
@@ -73,6 +72,9 @@ def register_commands(ShinobuCommand):
 
     @ShinobuCommand("Pulls latest from the ShinobuBot repo")
     async def fetch(message: discord.Message, arguments: str):
+        if not shinobu.author_is_owner(message):
+            await shinobu.send_message(message.channel, ">tries to fetch\n>isn't owner\n>TFW no face")
+            return
         from subprocess import check_output
         out = check_output(["git", "pull"]).decode("utf-8")
         await shinobu.send_message(message.channel, out)
