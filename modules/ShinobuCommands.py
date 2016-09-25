@@ -20,6 +20,8 @@ def register_commands(ShinobuCommand):
 
     @ShinobuCommand("Announces a message in the default channel of all servers")
     async def broadcast(message:discord.Message, arguments:str):
+        if not shinobu.author_is_owner(message):
+            return
         for channel in shinobu.get_all_channels():
             if channel.is_default:
                 await shinobu.send_message(channel, arguments)
