@@ -57,11 +57,7 @@ async def broadcast(message:discord.Message, arguments:str):
 @ShinobuCommand("Lists all loaded modules")
 async def modules(message:discord.Message, arguments:str):
     output = ""
-    if arguments == "loaded":
-        output = "`Loaded Modules`\n"
-        for module in shinobu.loaded_modules:
-            output += ("**{0}** - Version {1}\n".format(module.__name__, module.version))
-    elif arguments == "available":
+    if arguments == "available":
         output = "`Available Modules`\n"
         import os
         module_pool = glob.glob(os.path.dirname(__file__) + "/*")
@@ -72,7 +68,9 @@ async def modules(message:discord.Message, arguments:str):
             else:
                 continue
     else:
-        return
+        output = "`Loaded Modules`\n"
+        for module in shinobu.loaded_modules:
+            output += ("**{0}** - Version {1}\n".format(module.__name__, module.version))
     await shinobu.send_message(message.channel, output)
 
 
