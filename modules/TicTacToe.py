@@ -8,6 +8,8 @@ async def accept_message(message:discord.Message):
             print(arguments)
             if arguments.rsplit(" ")[0].isdigit():
                 await commands["place"](message, arguments)
+            elif arguments == "":
+                await commands["help"](message, arguments)
             else:
                 await commands[arguments.rsplit(" ")[0]](message,arguments)
 
@@ -18,6 +20,15 @@ def accept_shinobu_instance(i:discord.Client):
     global shinobu
     shinobu = i
 
+def register_commands(ShinobuCommand):
+    @ShinobuCommand("Invoke the TicTacToe module")
+    async def ttt(message:discord.Message, arguments:str):
+        if arguments.rsplit(" ")[0].isdigit():
+            await commands["place"](message, arguments)
+        elif arguments == "":
+            await commands["help"](message, arguments)
+        else:
+            await commands[arguments.rsplit(" ")[0]](message, arguments)
 
 version = "1.0.3"
 shinobu = None

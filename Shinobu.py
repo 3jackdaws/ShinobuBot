@@ -1,54 +1,71 @@
 import discord
 from resources import *
-from importlib import reload
+from importlib import reload as reloadmod
 from math import floor
 from random import random
+from glob import glob
 import types
 import sys
 import os
 import socket
 
 sys.path.append("./modules")
-print("./modules")
 
-def author_is_owner(message):
-    return message.author.id == owner_id
+ShinobuCommandList = {}
+ShinobuCommandDesc = {}
 
-def load_config(self):
-    print("####  Loading Config  ####")
+def author_is_owner(self, message):
+    return message.author.id == self.config["owner"]
+
+def reload_config(self):
     import json
     infile = open('shinobu_config.json', 'r')
-    config = json.load(infile)
-    self.old_modules = self.loaded_modules
-    self.loaded_modules = []
-    print("Attempting to load [{0}] modules".format(len(config["modules"])))
-    for module in config["modules"]:
-        mod = __import__(module)
-        mod = reload(mod)
-        mod.accept_shinobu_instance(self)
-        print("Loaded {0}, Version {1}".format(mod.__name__, mod.version))
-        self.loaded_modules.append(mod)
+    self.config = json.load(infile)
+
+def load_all(self):
+    print("####  Loading Config  ####")
+    self.reload_config()
+    print("Attempting to load [{0}] modules".format(len(self.config["modules"])))
+    for module in self.config["modules"]:
+        shinobu.reload_module(module)
     print("##########################\n")
     return len(self.loaded_modules)
 
-def load_safemode_mods(shinobu, modules:list):
-    loaded_modules = []
-    for modname in modules:
+def load_safemode_mods(self):
+    self.loaded_modules = []
+    for modname in self.config["safemode"]:
         mod = __import__(modname)
         mod.accept_shinobu_instance(shinobu)
-        loaded_modules.append(mod)
-    return loaded_modules
+        mod.register_commands
+        self.loaded_modules.append(mod)
+    return len(self.loaded_modules)
+
+def ShinobuCommand(description):
+    global ShinobuCommandList
+    global ShinobuCommandDesc
+
+    def find_command(command_function):
+        ShinobuCommandList[command_function.__name__] = command_function
+        if not command_function.__module__ in ShinobuCommandDesc:
+            ShinobuCommandDesc[command_function.__module__] = {}
+
+        ShinobuCommandDesc[command_function.__module__][command_function.__name__] = description
+        return command_function
+    return find_command
+
+
 
 def load_module(self, module_name):
     try:
         mod = __import__(module_name)
-        mod = reload(mod)
+        mod = reloadmod(mod)
         mod.accept_shinobu_instance(self)
-        print("Loading module {0}".format(mod.__name__))
+        if hasattr(mod, "register_commands"):
+            mod.register_commands(ShinobuCommand)
+        print("{0}, Version {1}".format(mod.__name__, mod.version))
         if mod in self.loaded_modules:
             index = self.loaded_modules.index(mod)
             self.loaded_modules.remove(mod)
-
         self.loaded_modules.append(mod)
         return True
     except ImportError as e:
@@ -64,22 +81,24 @@ def unload_module(self, module_name):
 
 
 
-
-owner_id = "142860170261692416"
 shinobu = discord.Client()
-shinobu.owner = owner_id
-safemode_modules = load_safemode_mods(shinobu, ["ShinobuCommands", "MessageLog"])
-shinobu.load_config = types.MethodType(load_config, shinobu)
-shinobu.load_mod = types.MethodType(load_module, shinobu)
-shinobu.unload_mod = types.MethodType(unload_module, shinobu)
+
+##########BIND NEW METHODS
+shinobu.reload_all = types.MethodType(load_all, shinobu)
+shinobu.reload_module = types.MethodType(load_module, shinobu)
+shinobu.unload_module = types.MethodType(unload_module, shinobu)
+shinobu.reload_config = types.MethodType(reload_config, shinobu)
+shinobu.safemode = types.MethodType(load_safemode_mods, shinobu)
+shinobu.author_is_owner = types.MethodType(author_is_owner, shinobu)
+#############################################################
+
+##########PRE-INITIALIZATION
 shinobu.loaded_modules = []
-shinobu.load_config()
+shinobu.command_description = ShinobuCommandDesc
+
+shinobu.reload_config()
+shinobu.reload_all()
 shinobu.idle = False
-module_description = []
-
-
-
-
 
 
 
@@ -95,27 +114,36 @@ async def on_message(message:discord.Message):
 
         if message.author.id == shinobu.user.id: return;
 
-        if message.content[0] == "!" and author_is_owner(message):
+        if message.content[0] == "!" and shinobu.author_is_owner(message):
             if message.content.rsplit(" ")[0] == "!safemode":
                 await shinobu.send_message(message.channel, "Loading safemode modules")
-                shinobu.loaded_modules = safemode_modules
+                shinobu.safemode()
             elif message.content.rsplit(" ")[0] == "!pause":
                 if shinobu.idle:
                     shinobu.idle = False
+                    await shinobu.change_status(idle=False)
                     await shinobu.send_message(message.channel, "ShinobuBot on {0} checking in".format(socket.gethostname()))
                 else:
                     shinobu.idle = True
+                    await shinobu.change_status(idle=True)
                     await shinobu.send_message(message.channel, "Paused")
 
         if shinobu.idle == True: return
-        for module in shinobu.loaded_modules:
-            try:
-                await module.accept_message(message)
-            except Exception as e:
-                print("error",module)
-                await shinobu.send_message(message.channel, "There seems to be a problem with the {0} module".format(module.__name__))
-                await shinobu.send_message(message.channel,("[{0}]: " + str(e)).format(module.__name__))
-                print(sys.exc_info()[0])
-                print(sys.exc_traceback)
+        if message.content[0] is ".":
+            command = message.content.rsplit(" ")[0][1:]
+            arguments = " ".join(message.content.rsplit(" ")[1:])
+            # print("COMMAND: {0}, ARGUMENTS: {1}".format(command, arguments))
+            if command in ShinobuCommandList:
+                await ShinobuCommandList[command](message, arguments)
+
+        else:
+            for module in shinobu.loaded_modules:
+                try:
+                    await module.accept_message(message)
+                except Exception as e:
+                    await shinobu.send_message(message.channel, "There seems to be a problem with the {0} module".format(module.__name__))
+                    await shinobu.send_message(message.channel,("[{0}]: " + str(e)).format(module.__name__))
+                    print(sys.exc_info()[0])
+                    print(sys.exc_traceback)
 
 shinobu.run('MjI3NzEwMjQ2MzM0NzU4OTEz.CsKHOA.-VMTRbjonKthatdxSldkcByan8M')

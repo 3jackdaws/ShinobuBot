@@ -1,8 +1,6 @@
 {
-  "modules":["MessageLog", "ShinobuCommands", "TicTacToe" ],
-  "ssh":{
-    "host":"thanatos.local",
-    "user":"minecraft",
-    "password":".123minecraft"
-  }
+  "modules":["ShinobuBase", "MessageLog","ShinobuCommands", "TicTacToe", "RegexResponse"],
+  "safemode":["ShinobuBase", "MessageLog"],
+
+  "owner":"142860170261692416"
 }
