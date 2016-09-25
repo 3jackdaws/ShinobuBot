@@ -19,7 +19,7 @@ def accept_shinobu_instance(i:discord.Client):
     shinobu = i
 
 
-version = "0.1.0"
+version = "1.0.2"
 shinobu = None
 
 gameboards = {}
