@@ -8,7 +8,7 @@ import sys
 import os
 import socket
 
-sys.path.append(os.path.dirname(__file__) + "/modules/")
+sys.path.append(os.path.dirname(__file__) + "/modules")
 
 def author_is_owner(message):
     return message.author.id == owner_id
