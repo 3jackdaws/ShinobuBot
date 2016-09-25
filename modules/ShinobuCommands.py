@@ -1,6 +1,6 @@
 import discord
 import resources
-
+import glob
 version = "1.1.0"
 
 async def accept_message(message:discord.Message):
@@ -57,9 +57,24 @@ async def broadcast(message:discord.Message, arguments:str):
 @ShinobuCommand("Lists all loaded modules")
 async def modules(message:discord.Message, arguments:str):
     output = ""
-    for module in shinobu.loaded_modules:
-        output += ("**{0}** - Version {1}\n".format(module.__name__, module.version))
+    if arguments == "loaded":
+        output = "`Loaded Modules`\n"
+        for module in shinobu.loaded_modules:
+            output += ("**{0}** - Version {1}\n".format(module.__name__, module.version))
+    elif arguments == "available":
+        output = "`Available Modules`\n"
+        import os
+        module_pool = glob.glob(os.path.dirname(__file__) + "/*")
+        for module in module_pool:
+            if ".py" in module:
+                module = os.path.basename(module)[:-3]
+                output += ("**{0}**\n".format(module))
+            else:
+                continue
+    else:
+        return
     await shinobu.send_message(message.channel, output)
+
 
 @ShinobuCommand("Tells Shinobu to learn a paired response")
 async def learn(message:discord.Message, arguments:str):
