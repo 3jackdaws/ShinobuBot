@@ -1,3 +1,8 @@
 {
-  "modules":["ShinobuCommands", "echo"]
+  "modules":["MessageLog", "ShinobuCommands","ShinobuSSH" ],
+  "ssh":{
+    "host":"thanatos.local",
+    "user":"minecraft",
+    "password":".123minecraft"
+  }
 }

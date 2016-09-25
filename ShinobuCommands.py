@@ -1,13 +1,13 @@
 import discord
 import resources
 
-version = "1.0.5"
+version = "1.1.0"
 
 async def accept_message(message:discord.Message):
     if message.content[0] is ".":
         command = message.content.rsplit(" ")[0][1:]
         arguments = " ".join(message.content.rsplit(" ")[1:])
-        print(command, arguments)
+        # print("COMMAND: {0}, ARGUMENTS: {1}".format(command, arguments))
         if command in ShinobuCommandList:
             await ShinobuCommandList[command](message, arguments)
 
@@ -58,7 +58,7 @@ async def broadcast(message:discord.Message, arguments:str):
 async def mods(message:discord.Message, arguments:str):
     output = ""
     for module in shinobu.loaded_modules:
-        output += (module.__name__ + "\n")
+        output += ("**{0}** - Version {1}\n".format(module.__name__, module.version))
     await shinobu.send_message(message.channel, output)
 
 @ShinobuCommand("Tells Shinobu to learn a paired response")
@@ -101,3 +101,33 @@ async def reload(message:discord.Message, arguments:str):
     start = await shinobu.send_message(message.channel, "Reloading config")
     mods = shinobu.load_config()
     await shinobu.edit_message(start, "Loaded {0} modules".format(mods))
+
+@ShinobuCommand("Tells Shinobu to load or reload a specified module")
+async def load(message:discord.Message, arguments:str):
+    if not author_is_owner(message):
+        await shinobu.send_message(message.channel, ">tries to load mod\n>isn't owner")
+        return
+    start = await shinobu.send_message(message.channel, "Loading module {0}".format(arguments))
+    if shinobu.load_mod(arguments):
+        text = "Loaded module {0}"
+    else:
+        text = "Failed loading module {0}"
+    await shinobu.edit_message(start, text.format(arguments))
+
+@ShinobuCommand("Tells Shinobu to load or reload a specified module")
+async def unload(message:discord.Message, arguments:str):
+    if not author_is_owner(message):
+        await shinobu.send_message(message.channel, ">tries to load mod\n>isn't owner")
+        return
+    start = await shinobu.send_message(message.channel, "Unloading module {0}".format(arguments))
+    if shinobu.unload_mod(arguments):
+        text = "Unloaded module {0}"
+    else:
+        text = "Failed unloading module {0}"
+    await shinobu.edit_message(start, text.format(arguments))
+
+@ShinobuCommand("Echos the text after the command to the same channel")
+async def fetch(message:discord.Message, arguments:str):
+    from subprocess import check_output
+    out = check_output(["git", "pull"]).decode("utf-8")
+    await shinobu.send_message(message.channel, out)
