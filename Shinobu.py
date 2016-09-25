@@ -114,7 +114,7 @@ async def on_message(message:discord.Message):
             except Exception as e:
                 print("error",module)
                 await shinobu.send_message(message.channel, "There seems to be a problem with the {0} module".format(module.__name__))
-                print(("[{0}]: " + str(e)).format(module.__name__))
+                await shinobu.send_message(message.channel,("[{0}]: " + str(e)).format(module.__name__))
                 print(sys.exc_info()[0])
                 print(sys.exc_traceback)
 
