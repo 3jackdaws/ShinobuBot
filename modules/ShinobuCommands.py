@@ -34,7 +34,7 @@ def register_commands(ShinobuCommand):
         for channel in message.channel_mentions:
             await shinobu.send_message(channel, ("<@"+sender + "> told me to say:\n") + " ".join(given_message), tts=True)
 
-    @ShinobuCommand("Posts a message in a channel that a user doesn't have access to")
+    @ShinobuCommand("Says what system Shinobu is running on")
     async def who(message: discord.Message, arguments: str):
         from socket import gethostname
         await shinobu.send_message(message.channel, "ShinobuBot on {0}".format(gethostname()))

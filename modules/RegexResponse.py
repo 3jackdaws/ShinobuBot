@@ -73,7 +73,7 @@ def register_commands(ShinobuCommand):
                 pair[1] = None
         write_patterns()
 #####NEXT COMMAND
-    @ShinobuCommand("Tells Shinobu to unlearn a paired response and never learn it again")
+    @ShinobuCommand("Looks up the pair that a specific message matches to")
     async def relookup(message: discord.Message, arguments: str):
         for pair in patterned_responses:
             if pair[1] == None: continue
