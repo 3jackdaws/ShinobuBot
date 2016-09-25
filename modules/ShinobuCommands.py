@@ -2,7 +2,7 @@ import discord
 import resources
 import glob
 import os
-version = "1.1.0"
+version = "1.2.6"
 
 async def accept_message(message:discord.Message):
     if message.content[0] is ".":

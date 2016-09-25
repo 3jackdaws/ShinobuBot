@@ -1,5 +1,5 @@
 {
-  "modules":["MessageLog", "ShinobuCommands" ],
+  "modules":["MessageLog", "ShinobuCommands", "TicTacToe" ],
   "ssh":{
     "host":"thanatos.local",
     "user":"minecraft",
