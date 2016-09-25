@@ -5,6 +5,10 @@ from math import floor
 from random import random
 import types
 import sys
+import os
+import socket
+
+sys.path.append(os.path.dirname(__file__) + "/modules/")
 
 def author_is_owner(message):
     return message.author.id == owner_id
@@ -69,6 +73,7 @@ shinobu.load_mod = types.MethodType(load_module, shinobu)
 shinobu.unload_mod = types.MethodType(unload_module, shinobu)
 shinobu.loaded_modules = []
 shinobu.load_config()
+shinobu.idle = False
 module_description = []
 
 
@@ -87,14 +92,21 @@ async def on_ready():
 @shinobu.event
 async def on_message(message:discord.Message):
 
-
         if message.author.id == shinobu.user.id: return;
+
         if message.content[0] == "!" and author_is_owner(message):
             if message.content.rsplit(" ")[0] == "!safemode":
                 await shinobu.send_message(message.channel, "Loading safemode modules")
                 shinobu.loaded_modules = safemode_modules
+            elif message.content.rsplit(" ")[0] == "!pause":
+                if shinobu.idle:
+                    shinobu.idle = False
+                    await shinobu.send_message(message.channel, "ShinobuBot on {0} checking in".format(socket.gethostname()))
+                else:
+                    shinobu.idle = True
+                    await shinobu.send_message(message.channel, "Paused")
 
-
+        if shinobu.idle == True: return
         for module in shinobu.loaded_modules:
             try:
                 await module.accept_message(message)
@@ -104,7 +116,5 @@ async def on_message(message:discord.Message):
                 print(("[{0}]: " + str(e)).format(module.__name__))
                 print(sys.exc_info()[0])
                 print(sys.exc_traceback)
-
-
 
 shinobu.run('MjI3NzEwMjQ2MzM0NzU4OTEz.CsKHOA.-VMTRbjonKthatdxSldkcByan8M')

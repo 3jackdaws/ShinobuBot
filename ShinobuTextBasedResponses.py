@@ -1,7 +1,9 @@
-import ShinobuCommands
-import discord
-import resources
 import re
+
+import discord
+
+import resources
+from modules import ShinobuCommands
 
 shinobu = ShinobuCommands.get_instance()
 
