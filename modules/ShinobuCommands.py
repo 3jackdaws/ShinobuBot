@@ -143,6 +143,5 @@ async def unload(message:discord.Message, arguments:str):
 @ShinobuCommand("Pulls latest from the ShinobuBot repo")
 async def fetch(message:discord.Message, arguments:str):
     from subprocess import check_output
-    os.chdir("..")
     out = check_output(["git", "pull"]).decode("utf-8")
     await shinobu.send_message(message.channel, out)
