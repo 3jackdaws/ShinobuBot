@@ -19,7 +19,7 @@ def accept_shinobu_instance(i:discord.Client):
     shinobu = i
 
 
-version = "1.0.2"
+version = "1.0.3"
 shinobu = None
 
 gameboards = {}
@@ -81,6 +81,7 @@ async def place(message:discord.Message, arguments:str):
         gameboards[author]["board"][index] = "O"
         winner = has_won(gameboards[author]["board"])
         if winner is not False:
+            await shinobu.send_message(message.channel, drawboard(gameboards[author]["board"]))
             if winner == "X":
                 await shinobu.send_message(message.channel, "I won!")
             else:
@@ -99,10 +100,12 @@ async def place(message:discord.Message, arguments:str):
         winner = has_won(gameboards[author]["board"])
 
         if winner is not False:
+            await shinobu.send_message(message.channel, drawboard(gameboards[author]["board"]))
             if winner == "X":
                 await shinobu.send_message(message.channel, "I won!")
             else:
                 await shinobu.send_message(message.channel, "Wow, you won!")
+
             gameboards[author]["board"] = None
             return
         await shinobu.send_message(message.channel, drawboard(gameboards[author]["board"]))
