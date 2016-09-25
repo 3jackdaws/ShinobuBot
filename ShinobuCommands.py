@@ -126,7 +126,7 @@ async def unload(message:discord.Message, arguments:str):
         text = "Failed unloading module {0}"
     await shinobu.edit_message(start, text.format(arguments))
 
-@ShinobuCommand("Echos the text after the command to the same channel")
+@ShinobuCommand("Pulls latest from the ShinobuBot repo")
 async def fetch(message:discord.Message, arguments:str):
     from subprocess import check_output
     out = check_output(["git", "pull"]).decode("utf-8")
