@@ -36,7 +36,7 @@ def write_pr():
 
 def read_pr():
     import json
-    infile = open('pair_response.json', 'r')
+    infile = open('resources/pair_response.json', 'r')
     jsonstring = infile.read()
     return json.loads(jsonstring)
 

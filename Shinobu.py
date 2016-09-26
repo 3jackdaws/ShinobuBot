@@ -40,6 +40,7 @@ def load_safemode_mods(self):
     for modname in self.config["safemode"]:
         shinobu.reload_module(modname)
     shinobu.command_description = ShinobuCommandDesc
+    shinobu.start_private_message()
     return len(self.loaded_modules)
 
 def ShinobuCommand(description):

@@ -25,7 +25,7 @@ async def accept_message(message:discord.Message):
 def load_patterns():
     import json
     global patterned_responses
-    pattern_file = open("patterned_responses.json", "a+")
+    pattern_file = open("resources/patterned_responses.json", "a+")
     pattern_file.seek(0)
     try:
         patterned_responses = json.load(pattern_file)
@@ -36,7 +36,7 @@ def load_patterns():
 def write_patterns():
     import json
     global patterned_responses
-    pattern_file = open("patterned_responses.json", "w")
+    pattern_file = open("resources/patterned_responses.json", "w")
     json.dump(patterned_responses, pattern_file)
 
 def accept_shinobu_instance(i:discord.Client):

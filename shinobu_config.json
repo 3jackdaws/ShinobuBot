@@ -1,5 +1,5 @@
 {
-  "modules":["ShinobuBase", "MessageLog","ShinobuCommands", "TicTacToe", "RegexResponse", "CBot"],
+  "modules":["ShinobuBase", "MessageLog","ShinobuCommands", "TicTacToe", "RegexResponse", "TalkBack", "ReminderScheduler"],
   "safemode":["ShinobuBase", "MessageLog"],
 
   "owner":"142860170261692416"
