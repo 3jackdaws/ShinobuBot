@@ -16,7 +16,7 @@ def choose_from(choices:list):
 
 async def accept_message(message:discord.Message):
     if message.content[0].isalpha():
-        response = get_reponse(message.content)
+        response = get_reponse(message.content.lower())
         if response is not None:
             await shinobu.send_message(message.channel, response)
 
