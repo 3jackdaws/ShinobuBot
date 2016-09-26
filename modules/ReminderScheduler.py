@@ -62,7 +62,7 @@ def register_commands(ShinobuCommand):
             now_offset = now + datetime.timedelta(seconds=time_til)
             reminder_list[author].append([now_offset.timestamp(), text])
             datestring = now_offset.strftime("%-I:%M:%S%p on %b %-d, %Y")
-            await shinobu.send_message(message.channel, "Reminded scheduled for {0}".format(datestring))
+            await shinobu.send_message(message.channel, "Reminder scheduled for {0}".format(datestring))
             write_reminder()
 
 
