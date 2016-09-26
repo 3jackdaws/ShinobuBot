@@ -6,7 +6,7 @@ import asyncio
 decode_periods = {"sec":1,
                   "min":60,
                   "hour":3600}
-
+os.environ['TZ'] = 'America/Los_Angeles'
 def get_seconds_from_str(period:str):
     total_seconds = 0
     for per in decode_periods:
@@ -62,7 +62,7 @@ def register_commands(ShinobuCommand):
             now_offset = now + datetime.timedelta(seconds=time_til)
             reminder_list[author].append([now_offset.timestamp(), text])
             datestring = now_offset.strftime("%-I:%M:%S%p on %b %-d, %Y")
-            await shinobu.send_message(message.channel, "Reminder scheduled for {0}".format(datestring))
+            await shinobu.send_message(message.channel, "Reminder scheduled for {0} Pacific Time".format(datestring))
             write_reminder()
 
 
