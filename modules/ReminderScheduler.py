@@ -115,6 +115,11 @@ def start_reminder(time, authorid, text):
                 break
         await asyncio.sleep(time)
         await shinobu.send_message(author, "***Reminder:***\n{0}" .format(text))
+        global  reminder_list
+        for reminder in reminder_list[authorid]:
+            if reminder[0] < datetime.datetime.now().timestamp():
+                reminder_list[authorid].remove(reminder)
+                write_reminder()
         print("Sending scheduled message to {0}".format(author.nick))
 
     fut = asyncio.ensure_future(send_message())
