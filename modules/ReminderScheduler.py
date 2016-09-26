@@ -2,6 +2,7 @@ import discord
 import re
 import datetime
 import asyncio
+import os
 
 decode_periods = {"sec":1,
                   "min":60,
