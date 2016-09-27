@@ -139,6 +139,7 @@ async def on_message(message:discord.Message):
             # print("COMMAND: {0}, ARGUMENTS: {1}".format(command, arguments))
             if command in ShinobuCommandList:
                 await ShinobuCommandList[command](message, arguments)
+                await shinobu.delete_message(message)
 
         else:
             for module in shinobu.loaded_modules:
