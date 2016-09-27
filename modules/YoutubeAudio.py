@@ -2,10 +2,11 @@ import discord
 import nacl
 import discord.opus
 import pafy
+import asyncio
 
 
 
-version = "0.0.2"
+version = "0.0.3"
 
 async def accept_message(message:discord.Message):
     pass
@@ -14,8 +15,19 @@ def accept_shinobu_instance(instance):
     global shinobu
     shinobu = instance
 
+def cleanup():
+    global music
+    global voice
+    print("Module YoutubeAudio cleaning up")
+    if music['current'] is not None:
+        music['current'].stop()
+    if voice is not None:
+        print("Disconnect voice")
+        asyncio.ensure_future(voice.disconnect())
+
+
+
 shinobu = None # type: discord.Client
-voice_client = None
 
 music = {}
 music['queue'] = []
@@ -44,14 +56,19 @@ async def shinobu_connect_to(voice_channel:discord.Channel):
         await voice.disconnect()
         voice = await shinobu.join_voice_channel(voice_channel)
 
-async def notify_track_scheduler():
-    global music
-    global voice
-    if music['current'] is None or music['current'].is_done():
-        nexturl = music['queue'].pop()
-        if nexturl:
-            music['current'] = await voice.create_ytdl_player(nexturl, use_avconv=True, after=notify_track_scheduler)
-            music['current'].start()
+
+def notify_track_scheduler():
+    async def advance_queue():
+        global music
+        global voice
+        if music['current'] is None or music['current'].is_done():
+            if len(music['queue']) > 0:
+                nexturl = music['queue'].pop()
+                buffering = await shinobu.send_message(music['text-channel'], "**Buffering**:")
+                music['current'] = await voice.create_ytdl_player(nexturl, use_avconv=True, after=notify_track_scheduler)
+                await shinobu.edit_message( buffering, "**Now playing**:\n" + music['current'].title)
+                music['current'].start()
+    fut = asyncio.ensure_future(advance_queue())
 
 
 def register_commands(ShinobuCommand):
@@ -65,10 +82,11 @@ def register_commands(ShinobuCommand):
             await shinobu.send_message(message.channel, "You must be in a voice channel in order to use that command")
             return
         await shinobu_connect_to(channel_called_to)
+        music['text-channel'] = message.channel
         video = pafy.new(arguments)
-        await shinobu.send_message(message.channel, "Added: {0}".format(video.title))
+        await shinobu.send_message(message.channel, "**Added**:\n{0}".format(video.title))
         music['queue'].append(arguments)
-        await notify_track_scheduler()
+        notify_track_scheduler()
 
 
     @ShinobuCommand("Tells Shinobu to leave a channel")
@@ -84,18 +102,27 @@ def register_commands(ShinobuCommand):
         global music
         global voice
         if music is not None and music['current'].is_playing():
-            if len(music['queue']) > 0:
-                nexturl = music['queue'].pop()
-                if music['current'] is not None:
-                    music['current'].stop()
-                music['current'] = await voice.create_ytdl_player(nexturl, use_avconv=True, after=notify_track_scheduler)
-                music['current'].start()
-            else:
-                music['current'].stop()
-                music['current'] = None
+            music['current'].stop()
 
     @ShinobuCommand("Pauses current track")
     async def pause(message: discord.Message, arguments: str):
         global music
         if music['current'] is not None:
             music['current'].pause()
+
+    @ShinobuCommand("Lists the current queue")
+    async def list(message: discord.Message, arguments: str):
+        global music
+        size = len(music['queue']) if len(music['queue']) < 5 else 5
+        output = "**YouTube Queue**\n"
+        if size == 0:
+            await shinobu.send_message(message.channel, "No queued videos")
+            return
+        for song in music['queue']:
+            video = pafy.new(song)
+            output += video.title + "\n"
+            size -= 1
+            if size == 0:
+                break
+        await shinobu.send_message(message.channel, output)
+

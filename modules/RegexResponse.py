@@ -55,8 +55,10 @@ def register_commands(ShinobuCommand):
             await shinobu.send_message(message.channel,
                                        "What is that supposed to mean?  You have to have a component I'm looking for and a component I respond with.  Those need to be separated by a pipe symbol '|'")
         else:
-            add_response(components[0], components[1])
-            write_patterns()
+            if add_response(components[0], components[1]):
+                write_patterns()
+            else:
+                await shinobu.send_message(message.channel, "That type of pattern is not allowed.")
 #####NEXT COMMAND
     @ShinobuCommand("Tells Shinobu to unlearn a paired response")
     async def unlearn(message: discord.Message, arguments: str):
@@ -92,7 +94,8 @@ def test_reg(reg):
 
 def add_response(regex, response, raw=False):
     global patterned_responses
-    if not test_reg(regex):return
+    if not test_reg(regex):
+        return False
     inserted = False
     for pair in patterned_responses:
         if regex == pair[0]:
@@ -101,6 +104,7 @@ def add_response(regex, response, raw=False):
             inserted = True
     if not inserted:
         patterned_responses.append([regex,[response]])
+    return True
 
 
 def get_reponse(message):

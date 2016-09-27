@@ -58,6 +58,13 @@ def ShinobuCommand(description):
 
 
 def load_module(self, module_name):
+    for mod in self.loaded_modules:
+        if mod.__name__ == module_name:
+            if hasattr(mod, "cleanup"):
+                mod.cleanup()
+            self.loaded_modules.remove(mod)
+            break
+
     try:
         mod = __import__(module_name)
         mod = reloadmod(mod)
@@ -65,9 +72,7 @@ def load_module(self, module_name):
         if hasattr(mod, "register_commands"):
             mod.register_commands(ShinobuCommand)
         print("{0}, Version {1}".format(mod.__name__, mod.version))
-        if mod in self.loaded_modules:
-            index = self.loaded_modules.index(mod)
-            self.loaded_modules.remove(mod)
+
         self.loaded_modules.append(mod)
         return True
     except ImportError as e:
@@ -77,6 +82,8 @@ def load_module(self, module_name):
 def unload_module(self, module_name):
     for module in self.loaded_modules:
         if module.__name__ == module_name:
+            if hasattr(module, "cleanup"):
+                module.cleanup()
             self.loaded_modules.remove(module)
             return True
     return False
@@ -136,7 +143,6 @@ async def on_message(message:discord.Message):
         if message.content[0] is ".":
             command = message.content.rsplit(" ")[0][1:]
             arguments = " ".join(message.content.rsplit(" ")[1:])
-            # print("COMMAND: {0}, ARGUMENTS: {1}".format(command, arguments))
             if command in ShinobuCommandList:
                 await ShinobuCommandList[command](message, arguments)
 
