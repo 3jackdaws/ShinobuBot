@@ -83,8 +83,16 @@ def register_commands(ShinobuCommand):
                 return
         await shinobu.send_message(message.channel, "No matches")
 
+def test_reg(reg):
+    regexp = "(^|[^a-z])" + reg + "($|[^a-z])"
+    for string in ["or", "a", "to", "the", "from", "for"]:
+        if re.match(regexp, string):
+            return False
+    return True
+
 def add_response(regex, response, raw=False):
     global patterned_responses
+    if not test_reg(regex):return 
     inserted = False
     for pair in patterned_responses:
         if regex == pair[0]:
