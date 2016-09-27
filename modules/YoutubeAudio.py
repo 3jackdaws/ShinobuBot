@@ -24,5 +24,6 @@ def register_commands(ShinobuCommand):
                 if not discord.opus.is_loaded():
                     discord.opus.load_opus("libopus0")
                 shinobuplayer = await shinobu.join_voice_channel(vchannel)
-                await shinobuplayer.create_ytdl_player(arguments, use_avconv=True)
+                youtubeplayer = await shinobuplayer.create_ytdl_player(arguments, use_avconv=True)
+                youtubeplayer.start()
 
