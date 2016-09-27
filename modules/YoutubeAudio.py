@@ -1,5 +1,4 @@
 import discord
-import pafy
 import nacl
 import discord.opus
 
@@ -22,12 +21,8 @@ def register_commands(ShinobuCommand):
         print(arguments)
         for vchannel in shinobu.get_all_channels():
             if message.author in vchannel.voice_members:
-                video = pafy.new(arguments)
-                audiostream = video.getbestaudio()
-                filename = audiostream.download(quiet=True)
-                file = open(filename, "rb")
                 if not discord.opus.is_loaded():
-                    discord.opus.load_opus("opusdec")
+                    discord.opus.load_opus("libopus0")
                 shinobuplayer = await shinobu.join_voice_channel(vchannel)
-                await shinobuplayer.create_stream_player(file)
+                await shinobuplayer.create_ytdl_player(arguments)
 

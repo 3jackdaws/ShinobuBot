@@ -7,4 +7,4 @@ WORKDIR /etc
 RUN git clone http://github.com/3jackdaws/ShinobuBot
 EXPOSE 55000
 WORKDIR /etc/ShinobuBot
-ENTRYPOINT ["python","Shinobu.py"]
+ENTRYPOINT ["bash"]
