@@ -92,7 +92,7 @@ def test_reg(reg):
 
 def add_response(regex, response, raw=False):
     global patterned_responses
-    if not test_reg(regex):return 
+    if not test_reg(regex):return
     inserted = False
     for pair in patterned_responses:
         if regex == pair[0]:

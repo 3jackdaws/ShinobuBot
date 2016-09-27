@@ -65,13 +65,15 @@ def register_commands(ShinobuCommand):
             await shinobu.send_message(message.channel, "You must be in a voice channel in order to use that command")
             return
         await shinobu_connect_to(channel_called_to)
+        video = pafy.new(arguments)
+        await shinobu.send_message(message.channel, "Added: {0}".format(video.title))
         music['queue'].append(arguments)
         await notify_track_scheduler()
 
 
     @ShinobuCommand("Tells Shinobu to leave a channel")
     async def leave(message: discord.Message, arguments: str):
-        global voice_client
+        global voice
         if arguments == "this channel":
             channel = get_author_voice_channel(message.author)
             if channel:
@@ -91,3 +93,9 @@ def register_commands(ShinobuCommand):
             else:
                 music['current'].stop()
                 music['current'] = None
+
+    @ShinobuCommand("Pauses current track")
+    async def pause(message: discord.Message, arguments: str):
+        global music
+        if music['current'] is not None:
+            music['current'].pause()
