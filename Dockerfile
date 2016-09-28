@@ -9,7 +9,8 @@ RUN git clone http://github.com/3jackdaws/ShinobuBot
 
 RUN cp -R /etc/ShinobuBot/* /etc/shinobu/
 RUN rm -rf /etc/ShinobuBot
-VOLUME /etc/shinobu/resources
+VOLUME /etc/shinobu
 EXPOSE 55000
-WORKDIR /etc/shinobu
-ENTRYPOINT ["python", "Shinobu.py"]
+RUN mv /etc/shinobu/start_shinobu.sh /etc/
+WORKDIR /etc
+ENTRYPOINT ["bash", "start_shinobu.sh"]
