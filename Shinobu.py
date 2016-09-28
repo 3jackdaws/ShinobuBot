@@ -27,7 +27,8 @@ def reload_config(self):
         self.config =   {
                         "modules":["ShinobuBase", "MessageLog","ShinobuCommands", "TicTacToe", "RegexResponse", "TalkBack", "ReminderScheduler", "YoutubeAudio"],
                         "safemode":["ShinobuBase", "MessageLog"],
-                        "owner":"142860170261692416"
+                        "owner":"142860170261692416",
+                        "instance name":"Default Shinobu Instance"
                         }
         json.dump(self.config, infile)
 

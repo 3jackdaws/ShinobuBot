@@ -36,5 +36,4 @@ def register_commands(ShinobuCommand):
 
     @ShinobuCommand("Says what system Shinobu is running on")
     async def who(message: discord.Message, arguments: str):
-        from socket import gethostname
-        await shinobu.send_message(message.channel, "ShinobuBot on {0}".format(gethostname()))
+        await shinobu.send_message(message.channel, "ShinobuBot on {0}".format(shinobu.config["instance name"]))

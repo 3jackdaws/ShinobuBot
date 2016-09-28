@@ -5,14 +5,9 @@ RUN pip3 install discord.py cleverbot PyNaCl youtube_dl pafy
 
 WORKDIR /etc
 RUN mkdir shinobu
-RUN git clone http://github.com/3jackdaws/ShinobuBot
-
-RUN cp -R /etc/ShinobuBot/* /etc/shinobu/
-RUN rm -rf /etc/ShinobuBot
 
 EXPOSE 55000
-WORKDIR /etc/shinobu
-RUN mv start_shinobu.sh ../start_shinobu.sh
-VOLUME /etc/shinobu
 WORKDIR /etc
+ADD start_shinobu.sh .
+VOLUME /etc/shinobu
 ENTRYPOINT ["sh", "/etc/start_shinobu.sh"]
