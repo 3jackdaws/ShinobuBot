@@ -43,10 +43,11 @@ def register_commands(ShinobuCommand):
         if author not in reminder_list:
             reminder_list[author] = []
         time = re.search("(@)[0-9:]", arguments)
-        relative = re.search("in",arguments) is not None
+        relative = re.search(" in ",arguments) is not None
+        absolute = re.search(" at ", arguments) is not None
         if relative:
-            period = re.findall("(in) ([ a-z0-9]+)(\"| to|$)", arguments)
-            text = re.findall("(to|\") ([ a-z0-9]+?)(\"| in|$)", arguments)
+            period = re.findall("(in) ([ a-zA-Z0-9]+?)(\"| to|$)", arguments)
+            text = re.findall("(to|\") ([ a-zA-Z0-9]+?)(\"| in|$)", arguments)
 
             if period:
                 period = period[0][1]

@@ -146,14 +146,13 @@ async def on_message(message:discord.Message):
             if command in ShinobuCommandList:
                 await ShinobuCommandList[command](message, arguments)
 
-        else:
-            for module in shinobu.loaded_modules:
-                try:
-                    await module.accept_message(message)
-                except Exception as e:
-                    await shinobu.send_message(message.channel, "There seems to be a problem with the {0} module".format(module.__name__))
-                    await shinobu.send_message(message.channel,("[{0}]: " + str(e)).format(module.__name__))
-                    print(sys.exc_info()[0])
-                    print(sys.exc_traceback)
+        for module in shinobu.loaded_modules:
+            try:
+                await module.accept_message(message)
+            except Exception as e:
+                await shinobu.send_message(message.channel, "There seems to be a problem with the {0} module".format(module.__name__))
+                await shinobu.send_message(message.channel,("[{0}]: " + str(e)).format(module.__name__))
+                print(sys.exc_info()[0])
+                print(sys.exc_traceback)
 
 shinobu.run('MjI3NzEwMjQ2MzM0NzU4OTEz.CsKHOA.-VMTRbjonKthatdxSldkcByan8M')
