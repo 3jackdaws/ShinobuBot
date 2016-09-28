@@ -22,7 +22,7 @@ def reload_config(self):
     infile.seek(0)
     try:
         self.config = json.load(infile)
-    except json.JSONDecodeError as e:
+    except:
         self.config =   {
                         "modules":["ShinobuBase", "MessageLog","ShinobuCommands", "TicTacToe", "RegexResponse", "TalkBack", "ReminderScheduler", "YoutubeAudio"],
                         "safemode":["ShinobuBase", "MessageLog"],
