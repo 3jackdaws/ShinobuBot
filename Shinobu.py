@@ -1,5 +1,4 @@
 import discord
-from resources import *
 from importlib import reload as reloadmod
 from math import floor
 from random import random
