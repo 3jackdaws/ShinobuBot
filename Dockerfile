@@ -9,8 +9,10 @@ RUN git clone http://github.com/3jackdaws/ShinobuBot
 
 RUN cp -R /etc/ShinobuBot/* /etc/shinobu/
 RUN rm -rf /etc/ShinobuBot
-VOLUME /etc/shinobu
+
 EXPOSE 55000
-RUN mv /etc/shinobu/start_shinobu.sh /etc/
+WORKDIR /etc/shinobu
+RUN mv start_shinobu.sh ../start_shinobu.sh
+VOLUME /etc/shinobu
 WORKDIR /etc
-ENTRYPOINT ["bash", "start_shinobu.sh"]
+ENTRYPOINT ["sh", "/etc/start_shinobu.sh"]
