@@ -19,8 +19,16 @@ def author_is_owner(self, message):
 
 def reload_config(self):
     import json
-    infile = open('shinobu_config.json', 'r')
-    self.config = json.load(infile)
+    infile = open('resources/shinobu_config.json', 'a+')
+    infile.seek(0)
+    try:
+        self.config = json.load(infile)
+    except json.JSONDecodeError as e:
+        self.config = {"modules":[],
+                       "safemode:":[],
+                       "owner":""}
+        json.dump(self.config, infile)
+
 
 def load_all(self):
     print("####  Loading Config  ####")
