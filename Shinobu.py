@@ -24,9 +24,11 @@ def reload_config(self):
     try:
         self.config = json.load(infile)
     except json.JSONDecodeError as e:
-        self.config = {"modules":[],
-                       "safemode:":[],
-                       "owner":""}
+        self.config =   {
+                        "modules":["ShinobuBase", "MessageLog","ShinobuCommands", "TicTacToe", "RegexResponse", "TalkBack", "ReminderScheduler", "YoutubeAudio"],
+                        "safemode":["ShinobuBase", "MessageLog"],
+                        "owner":"142860170261692416"
+                        }
         json.dump(self.config, infile)
 
 
