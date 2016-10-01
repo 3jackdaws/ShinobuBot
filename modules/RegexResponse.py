@@ -37,7 +37,7 @@ def write_patterns():
     import json
     global patterned_responses
     pattern_file = open("resources/patterned_responses.json", "w")
-    json.dump(patterned_responses, pattern_file)
+    json.dump(patterned_responses, pattern_file, indent=4)
 
 def accept_shinobu_instance(i:discord.Client):
     global shinobu

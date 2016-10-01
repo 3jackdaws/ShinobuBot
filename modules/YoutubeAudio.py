@@ -33,6 +33,7 @@ music = {}
 music['queue'] = []
 music['current'] = None
 music['next'] = None
+music['messagelist'] = []
 voice = None # type:discord.VoiceClient
 
 def get_author_voice_channel(author:discord.Member):
@@ -84,7 +85,7 @@ def register_commands(ShinobuCommand):
         await shinobu_connect_to(channel_called_to)
         music['text-channel'] = message.channel
         video = pafy.new(arguments)
-        await shinobu.send_message(message.channel, "**Added**:\n{0}".format(video.title))
+        music['messagelist'].append(await shinobu.send_message(message.channel, "**Added**:\n{0}".format(video.title)))
         music['queue'].append(arguments)
         notify_track_scheduler()
 
@@ -92,10 +93,13 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand("Tells Shinobu to leave a channel")
     async def leave(message: discord.Message, arguments: str):
         global voice
+        global music
         if arguments == "this channel":
             channel = get_author_voice_channel(message.author)
             if channel:
+                music['queue'] = []
                 await voice.disconnect()
+                voice = None
 
     @ShinobuCommand("Tells Shinobu to skip to the next song")
     async def next(message: discord.Message, arguments: str):
@@ -108,7 +112,10 @@ def register_commands(ShinobuCommand):
     async def pause(message: discord.Message, arguments: str):
         global music
         if music['current'] is not None:
-            music['current'].pause()
+            if music['current'].is_playing():
+                music['current'].pause()
+            else:
+                music['current'].resume()
 
     @ShinobuCommand("Lists the current queue")
     async def list(message: discord.Message, arguments: str):
