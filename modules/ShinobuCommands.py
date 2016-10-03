@@ -29,10 +29,27 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand("Posts a message in a channel that a user doesn't have access to")
     async def tell(message:discord.Message, arguments:str):
         originating_server = message.server
-        given_message = message.content.rsplit(" ")[2:]
+        given_message = arguments.rsplit(" ")[1:]
+        requested_channel = arguments.rsplit(" ")[0]
         sender = message.author.id
-        for channel in message.channel_mentions:
-            await shinobu.send_message(channel, ("<@"+sender + "> told me to say:\n") + " ".join(given_message), tts=True)
+        for channel in message.server.channels:
+            if channel.name == requested_channel:
+                await shinobu.send_message(channel, ("<@"+sender + "> told me to say:\n") + " ".join(given_message), tts=True)
+                await shinobu.send_message(message.channel, "Sent message to {}".format(channel.name))
+                return
+        await shinobu.send_message(message.channel, "Could not find channel {}".format(requested_channel))
+
+    @ShinobuCommand("All channels on the server")
+    async def channels(message: discord.Message, arguments: str):
+        output = "**Channels on this server:**\n__Text__\n"
+        for channel in message.server.channels:
+            if channel.type is discord.ChannelType.text:
+                output += (channel.name + "\n")
+        output += "\n__Voice__\n"
+        for channel in message.server.channels:
+            if channel.type is discord.ChannelType.voice:
+                output += (channel.name + "\n")
+        await shinobu.send_message(message.channel, output)
 
     @ShinobuCommand("Says what system Shinobu is running on")
     async def who(message: discord.Message, arguments: str):
