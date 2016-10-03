@@ -100,7 +100,7 @@ def unload_module(self, module_name):
 
 
 
-shinobu = discord.Client()
+shinobu = discord.Client() # type: discord.Client
 
 ##########BIND NEW METHODS
 shinobu.reload_all = types.MethodType(load_all, shinobu)
@@ -140,12 +140,12 @@ async def on_message(message:discord.Message):
             elif message.content.rsplit(" ")[0] == "!pause":
                 if shinobu.idle:
                     shinobu.idle = False
-                    await shinobu.change_status(idle=False)
+                    await shinobu.change_presence(idle=False)
                     await shinobu.send_message(message.channel, "ShinobuBot on {0} checking in".format(socket.gethostname()))
                     print("UNPAUSED")
                 else:
                     shinobu.idle = True
-                    await shinobu.change_status(idle=True)
+                    await shinobu.change_presence(idle=True)
                     await shinobu.send_message(message.channel, "Paused")
                     print("PAUSED")
 
