@@ -123,6 +123,15 @@ def cleanup():
         asyncio.ensure_future(stream_player.voice_client.disconnect())
 
 def register_commands(ShinobuCommand):
+    @ShinobuCommand("Lists media in the queue")
+    async def list(message: discord.Message, arguments: str):
+        output = "No queued audio"
+        if len(stream_player.audio_queue) > 0:
+            output = "**Media in queue:**\n"
+            for media in stream_player.audio_queue:
+                output += ("{0} - [{1}]\n".format(media.title, media.length))
+        await shinobu.send_message(message.channel, output)
+
     @ShinobuCommand("Goes to the next song in the queue")
     async def next(message: discord.Message, arguments: str):
         if stream_player.current is not None:
