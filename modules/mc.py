@@ -152,6 +152,9 @@ try:
 except:
     pass
 
+def say_as_shinobu(message):
+    response = rcon.send("tellraw @a {text:\"[Shinobu] " + message + "\", color:green}")
+
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Runs a command and returns the output -- Owner only")
     async def run(message:discord.Message, arguments:str):
@@ -171,3 +174,9 @@ def register_commands(ShinobuCommand):
                 result = "The server might already be running.  Try reloading the module."
             await shinobu.send_message(message.channel, result)
 
+    @ShinobuCommand("Tell message to entire server")
+    async def say(message: discord.Message, arguments: str):
+        if shinobu.author_is_owner(message) or message.author in operators:
+            say_as_shinobu(arguments)
+
+    ["kick", "morpheus", "setworldspawn", "tell", "warp", "op", "deop"]
