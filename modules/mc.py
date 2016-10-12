@@ -1,6 +1,7 @@
 import discord
 import re
 import subprocess
+import asyncio
 
 import select
 import socket
@@ -145,7 +146,7 @@ def accept_shinobu_instance(instance):
 
 operators = []
 version = "1.0.0"
-shinobu = None
+shinobu = None # type: discord.Client
 rcon = None
 try:
     rcon = RemoteConsole(host='isogen.net', port=3333, password='rconpasstest1')
@@ -154,6 +155,15 @@ except:
 
 def say_as_shinobu(message):
     response = rcon.send("tellraw @a {text:\"[Shinobu] " + message + "\", color:green}")
+
+def start_server():
+    return subprocess.check_output(["sh", "/home/shinobu/infinity/ServerStart.sh"]).decode()
+
+def is_server_running(process, find_in):
+    output = subprocess.check_output(["ps", "-C", process, "-o", "cmd"])
+    if find_in in output:
+        return True
+    return False
 
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Runs a command and returns the output -- Owner only")
@@ -169,7 +179,7 @@ def register_commands(ShinobuCommand):
     async def start(message: discord.Message, arguments: str):
         if shinobu.author_is_owner(message) or message.author in operators:
             if rcon is None:
-                result = subprocess.check_output(["sh", "/home/shinobu/infinity/ServerStart.sh"]).decode()
+                result = start_server()
             else:
                 result = "The server might already be running.  Try reloading the module."
             await shinobu.send_message(message.channel, result)
@@ -178,5 +188,22 @@ def register_commands(ShinobuCommand):
     async def say(message: discord.Message, arguments: str):
         if shinobu.author_is_owner(message) or message.author in operators:
             say_as_shinobu(arguments)
+
+    @ShinobuCommand("Restarts the Minecraft server")
+    async def restart(message: discord.Message, arguments: str):
+        if shinobu.author_is_owner(message) or message.author in operators:
+            say_as_shinobu("The server will restart in 10 seconds")
+            rmessage = await shinobu.send_message(message.channel, "Restarting Minecraft Server in 10 Seconds")
+            await asyncio.sleep(10)
+            rcon.send("stop")
+            await shinobu.edit_message(rmessage, "Sent stop command")
+
+    @ShinobuCommand("Checks if server is running")
+    async def mc_up(message: discord.Message, arguments: str):
+        if is_server_running("screen", "ftb"):
+            await shinobu.send_message(message.channel, "The server is running")
+        else:
+            await shinobu.send_message(message.channel, "The server is not currently running")
+
 
     ["kick", "morpheus", "setworldspawn", "tell", "warp", "op", "deop"]

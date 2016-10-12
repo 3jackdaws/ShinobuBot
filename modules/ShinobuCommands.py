@@ -2,6 +2,7 @@ import discord
 import resources
 import glob
 import os
+import re
 version = "1.2.7"
 
 async def accept_message(message:discord.Message):
@@ -11,7 +12,7 @@ def accept_shinobu_instance(instance):
     global shinobu
     shinobu = instance
 
-shinobu = None
+shinobu = None # type: discord.Client
 
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Echos the text after the command to the same channel")
@@ -54,3 +55,16 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand("Says what system Shinobu is running on")
     async def who(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "ShinobuBot on {0}".format(shinobu.config["instance name"]))
+
+    @ShinobuCommand("Purges messages according to arguments provided")
+    async def purge(message: discord.Message, arguments: str):
+        user=re.findall("(?<=user=)\<@[0-9]+\>", arguments)
+        pattern = re.findall("(?<=pattern=)\"[\s\S]+\"", arguments)
+        limit = re.findall("(?<=limit=)[0-9]+", arguments)
+        nodelete = re.search(" nodelete", arguments) is not None
+        channel = message.channel
+        limit = int(limit)
+        check = None
+        if pattern is not None:
+            check=lambda x:re.search(pattern, x) is not None
+        await shinobu.purge_from(channel, check=check,limit=limit)
