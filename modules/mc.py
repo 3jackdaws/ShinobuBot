@@ -160,7 +160,7 @@ def start_server():
     return subprocess.check_output(["sh", "/home/shinobu/infinity/ServerStart.sh"]).decode()
 
 def is_server_running(process, find_in):
-    output = subprocess.check_output(["ps", "-C", process, "-o", "cmd"])
+    output = subprocess.check_output(["ps", "-C", process, "-o", "cmd"]).decode("utf-8")
     if find_in in output:
         return True
     return False
