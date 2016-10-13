@@ -16,6 +16,12 @@ ShinobuCommandDesc = {}
 def author_is_owner(self, message):
     return message.author.id == self.config["owner"]
 
+def write_config(self):
+    import json
+    infile = open('resources/shinobu_config.json', 'w')
+    # infile.seek(0)
+    json.dump(self.config, infile, indent=2)
+
 def reload_config(self):
     import json
     infile = open('resources/shinobu_config.json', 'a+')
@@ -23,19 +29,21 @@ def reload_config(self):
     try:
         self.config = json.load(infile)
     except:
-        self.config =   {
-                        "modules":["ShinobuBase", "MessageLog","ShinobuCommands", "TicTacToe", "RegexResponse", "TalkBack", "ReminderScheduler", "YoutubeAudio"],
+        self.config = {
+                        "modules":["ShinobuBase", "MessageLog","ShinobuCommands", "TicTacToe", "RegexResponse", "TalkBack", "ReminderScheduler", "AudioPlayer"],
                         "safemode":["ShinobuBase", "MessageLog"],
                         "owner":"142860170261692416",
                         "instance name":"Default Shinobu Instance"
-                        }
-        json.dump(self.config, infile)
+                      }
+        json.dump(self.config, infile, indent=2)
 
 
 def load_all(self):
     print("####  Loading Config  ####")
     self.reload_config()
     print("Attempting to load [{0}] modules".format(len(self.config["modules"])))
+    for module in self.loaded_modules:
+        self.unload_module(module.__name__)
     for module in self.config["modules"]:
         shinobu.reload_module(module)
     print("##########################\n")
@@ -107,6 +115,7 @@ shinobu.reload_all = types.MethodType(load_all, shinobu)
 shinobu.reload_module = types.MethodType(load_module, shinobu)
 shinobu.unload_module = types.MethodType(unload_module, shinobu)
 shinobu.reload_config = types.MethodType(reload_config, shinobu)
+shinobu.write_config = types.MethodType(write_config, shinobu)
 shinobu.safemode = types.MethodType(load_safemode_mods, shinobu)
 shinobu.author_is_owner = types.MethodType(author_is_owner, shinobu)
 #############################################################
@@ -158,7 +167,8 @@ async def on_message(message:discord.Message):
 
         for module in shinobu.loaded_modules:
             try:
-                await module.accept_message(message)
+                if hasattr(module, "accept_message"):
+                    await module.accept_message(message)
             except Exception as e:
                 await shinobu.send_message(message.channel, "There seems to be a problem with the {0} module".format(module.__name__))
                 await shinobu.send_message(message.channel,("[{0}]: " + str(e)).format(module.__name__))
