@@ -30,7 +30,8 @@ def accept_shinobu_instance(i: discord.Client):
                     sender = data["sender"]["login"]
                     org = data["organization"]["login"]
                     repofull = data["repository"]["full_name"]
-                    message = "{0} has {1} a pull request in {2}".format(sender, action, repofull)
+                    url = data["pull_request"]["url"]
+                    message = "**{0}** has {1} a pull request in {2}\n{3}".format(sender, action, repofull, url)
                     schannel = None
                     for channel in shinobu.get_all_channels():
                         if "neon-aesthetic" in channel.name:
