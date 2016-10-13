@@ -7,6 +7,7 @@ import types
 import sys
 import os
 import socket
+import asyncio
 
 sys.path.append("./modules")
 
@@ -105,6 +106,8 @@ def unload_module(self, module_name):
             return True
     return False
 
+def quick_send(self, channel, message):
+    asyncio.ensure_future(self.send_message(channel, message))
 
 
 shinobu = discord.Client() # type: discord.Client
@@ -117,6 +120,7 @@ shinobu.reload_config = types.MethodType(reload_config, shinobu)
 shinobu.write_config = types.MethodType(write_config, shinobu)
 shinobu.safemode = types.MethodType(load_safemode_mods, shinobu)
 shinobu.author_is_owner = types.MethodType(author_is_owner, shinobu)
+shinobu.quick_send = types.MethodType(quick_send, shinobu)
 #############################################################
 
 ##########PRE-INITIALIZATION
