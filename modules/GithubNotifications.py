@@ -22,12 +22,10 @@ def accept_shinobu_instance(i: discord.Client):
                 import json
                 print("Github endpoint accessed")
                 data = module.request.get_json()
-                dump = open("resources/github_data.json", "w")
-                response = json.loads(data)
-
-                json.dump(response, dump, indent=2)
-                print(response["sender"]["login"])
-                print(response["organization"]["login"])
+                for key in data:
+                    print(key)
+                print(data["sender"]["login"])
+                print(data["organization"]["login"])
                 return "Shinobu Github Endpoint"
             return
     raise ImportWarning("ShinobuEndpointService must be present for the GithubNotifications module to function")
