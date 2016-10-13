@@ -31,7 +31,7 @@ def accept_shinobu_instance(i: discord.Client):
                 if action in ["assigned", "unassigned", "labeled", "unlabeled", "opened", "edited", "closed", "reopened"]:
                     sender = data["sender"]["login"]
                     org = data["organization"]["login"]
-                    repofull = data["pull_request"]["repo"]["fullname"]
+                    repofull = data["pull_request"]["head"]["repo"]["fullname"]
                     message = "{0} has {1} a pull request in {2}".format(sender, action, repofull)
                     send_message(message)
                 return "Shinobu Github Endpoint"
