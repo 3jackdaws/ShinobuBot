@@ -56,15 +56,28 @@ def register_commands(ShinobuCommand):
     async def who(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "ShinobuBot on {0}".format(shinobu.config["instance name"]))
 
-    @ShinobuCommand("Purges messages according to arguments provided")
-    async def purge(message: discord.Message, arguments: str):
-        user=re.findall("(?<=user=)\<@[0-9]+\>", arguments)
-        pattern = re.findall("(?<=pattern=)\"[\s\S]+\"", arguments)
-        limit = re.findall("(?<=limit=)[0-9]+", arguments)
-        nodelete = re.search(" nodelete", arguments) is not None
-        channel = message.channel
-        limit = int(limit)
-        check = None
-        if pattern is not None:
-            check=lambda x:re.search(pattern, x) is not None
-        await shinobu.purge_from(channel, check=check,limit=limit)
+    @ShinobuCommand("Modifies config")
+    async def setoption(message: discord.Message, arguments: str):
+        option = arguments.rsplit(" ")[0]
+        value = re.search("'[\s\S]+?'", arguments)
+        if option in shinobu.config:
+            shinobu.config[option] = value
+        await shinobu.send_message(message.channel, "Config option '{}' set to '{}'".format(option, value))
+
+    @ShinobuCommand("Modifies config")
+    async def selectopt(message: discord.Message, arguments: str):
+        pass
+
+
+    # @ShinobuCommand("Purges messages according to arguments provided")
+    # async def purge(message: discord.Message, arguments: str):
+    #     user=re.findall("(?<=user=)\<@[0-9]+\>", arguments)
+    #     pattern = re.findall("(?<=pattern=)\"[\s\S]+\"", arguments)
+    #     limit = re.findall("(?<=limit=)[0-9]+", arguments)
+    #     nodelete = re.search(" nodelete", arguments) is not None
+    #     channel = message.channel
+    #     limit = int(limit)
+    #     check = None
+    #     if pattern is not None:
+    #         check=lambda x:re.search(pattern, x) is not None
+    #     await shinobu.purge_from(channel, check=check,limit=limit)

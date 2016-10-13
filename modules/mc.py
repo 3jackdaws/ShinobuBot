@@ -6,6 +6,8 @@ import asyncio
 import select
 import socket
 import struct
+import psutil
+from mcstatus import MinecraftServer
 
 """
 Minecraft RCON Client API
@@ -136,22 +138,26 @@ async def accept_message(message:discord.Message):
     pass
 
 def accept_shinobu_instance(instance):
-    global shinobu, operators
+    global shinobu, operators, rcon, mc_server
     shinobu = instance
-    try:
-        operators = shinobu.config['minecraft_operators']
-    except:
-        operators = []
+    if "minecraft" not in shinobu.config:
+        shinobu.config["minecraft"] = {"host":"localhost","operators":[], "rcon":{"port":25565, "password":"correct horse battery staple"}}
+        shinobu.write_config()
+    else:
+        host = shinobu.config["minecraft"]["host"]
+        rcport = shinobu.config["minecraft"]["rcon"]["port"]
+        rcpass = shinobu.config["minecraft"]["rcon"]["password"]
+        print(host, rcport, rcpass)
+        rcon = RemoteConsole(host=host, port=rcport, password=rcpass)
+        mc_server = MinecraftServer(host)
 
 
-operators = []
+
 version = "1.0.0"
 shinobu = None # type: discord.Client
-rcon = None
-try:
-    rcon = RemoteConsole(host='isogen.net', port=3333, password='rconpasstest1')
-except:
-    pass
+rcon = None # type: RemoteConsole
+mc_server = None # type: MinecraftServer
+
 
 def say_as_shinobu(message):
     response = rcon.send("tellraw @a {text:\"[Shinobu] " + message + "\", color:green}")
@@ -159,7 +165,10 @@ def say_as_shinobu(message):
 def start_server():
     return subprocess.check_output(["sh", "/home/shinobu/infinity/ServerStart.sh"]).decode()
 
-def is_server_running(process, find_in):
+def get_server_pid():
+    output = subprocess.check_output(["ps -C java -o cmd"])
+
+def is_server_running(process="screen", find_in="ftb"):
     output = subprocess.check_output(["ps", "-C", process, "-o", "cmd"]).decode("utf-8")
     if find_in in output:
         return True
@@ -178,7 +187,7 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand("Starts the minecraft server")
     async def start(message: discord.Message, arguments: str):
         if shinobu.author_is_owner(message) or message.author in operators:
-            if rcon is None:
+            if not is_server_running():
                 result = start_server()
             else:
                 result = "The server might already be running.  Try reloading the module."
@@ -186,7 +195,7 @@ def register_commands(ShinobuCommand):
 
     @ShinobuCommand("Tell message to entire server")
     async def say(message: discord.Message, arguments: str):
-        if shinobu.author_is_owner(message) or message.author in operators:
+        if shinobu.author_is_owner(message) or message.author in shinobu.config["minecraft"]["operators"]:
             say_as_shinobu(arguments)
 
     @ShinobuCommand("Restarts the Minecraft server")
@@ -198,12 +207,32 @@ def register_commands(ShinobuCommand):
             rcon.send("stop")
             await shinobu.edit_message(rmessage, "Sent stop command")
 
-    @ShinobuCommand("Checks if server is running")
-    async def mc_up(message: discord.Message, arguments: str):
-        if is_server_running("screen", "ftb"):
-            await shinobu.send_message(message.channel, "The server is running")
-        else:
-            await shinobu.send_message(message.channel, "The server is not currently running")
+    @ShinobuCommand("Displays server status")
+    async def status(message: discord.Message, arguments: str):
+        global mc_server
+        status = mc_server.status()
+        output = "Current system load: {}%".format(psutil.cpu_percent())
+        output += "\nCurrent system used memory: {}%".format((psutil.virtual_memory().percent*10))
+        output += "\nPlayers online: [{}]".format(status.players.online)
+        output += "\nLatency : {} ms".format(status.latency)
+        await shinobu.send_message(message.channel, output)
 
+    @ShinobuCommand("Lists players currently online")
+    async def players(message: discord.Message, arguments: str):
+        query = mc_server.query()
+        output = "No players online"
+        if len(query.players.names) > 0:
+            output = "__**Players Online**__\n"
+            for player in query.players.names:
+                output += "{}\n".format(player)
+        await shinobu.send_message(message.channel, output)
+
+    @ShinobuCommand("ops a player")
+    async def op(message: discord.Message, arguments: str):
+        await run(message, "op " + arguments)
+
+    @ShinobuCommand("deops a player")
+    async def deop(message: discord.Message, arguments: str):
+        await run(message, "deop " + arguments)
 
     ["kick", "morpheus", "setworldspawn", "tell", "warp", "op", "deop"]
