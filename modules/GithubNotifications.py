@@ -1,40 +1,38 @@
 import discord
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import asyncio
 
-class PostRequestResponder(BaseHTTPRequestHandler):
-    def _set_headers(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
+def send_message():
+    pass
 
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
-        post_data = self.rfile.read(content_length)  # <--- Gets the data itself
-        self._set_headers()
-        self.wfile.write("<html><body><h1>POST!</h1></body></html>")
-        print(post_data)
+def write_reminder():
+    global reminder_list
+    import json
+    reminder_file = open("resources/reminder_list.json", "w")
+    json.dump(reminder_list, reminder_file)
 
 def accept_shinobu_instance(i: discord.Client):
-    global shinobu
+    global shinobu, server_thread
     shinobu = i
-    server_thread.run()
+    for module in shinobu.loaded_modules:
+        if hasattr(module, "endpoint"):
+            print("Register gh endpoint")
+            @module.endpoint.route("/github", methods=['POST', 'GET'])
+            def github_post():
+                print("Github endpoint accessed")
+                data = module.request.get_json()
+                dump = open("resources/github_data.json", "w")
+                import json
+                json.dump(data, dump, indent=2)
+                print(dump["sender"]["login"])
+                print(dump["organization"]["login"])
+                return "Shinobu Github Endpoint"
+            return
+    raise ImportWarning("ShinobuEndpointService must be present for the GithubNotifications module to function")
 
-def cleanup():
-    server.shutdown()
-    server_thread.join()
-
-def run_server():
-    global server
-    print("Starting HTTP server")
-    address = ('127.0.0.1', 5000)
-    server = HTTPServer(address, PostRequestResponder)
-    server.serve_forever()
-
-version = "1.0.0"
+version = "0.0.2"
 shinobu = None # type: discord.Client
-server_thread = threading.Thread(args=run_server)
-server = None #type: HTTPServer
+
 
 
 def register_commands(ShinobuCommand):
