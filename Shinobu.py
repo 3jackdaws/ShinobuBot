@@ -106,11 +106,14 @@ def unload_module(self, module_name):
             return True
     return False
 
-def quick_send(self, channel, message):
-    asyncio.ensure_future(self.send_message(channel, message))
+
 
 
 shinobu = discord.Client() # type: discord.Client
+
+shinobu_event_loop = asyncio.get_event_loop()
+def quick_send(self, channel, message):
+    asyncio.ensure_future(self.send_message(channel, message), loop=shinobu_event_loop)
 
 ##########BIND NEW METHODS
 shinobu.reload_all = types.MethodType(load_all, shinobu)
