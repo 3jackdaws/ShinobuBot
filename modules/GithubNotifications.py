@@ -29,7 +29,7 @@ def accept_shinobu_instance(i: discord.Client):
                 if action in ["assigned", "unassigned", "labeled", "unlabeled", "opened", "edited", "closed", "reopened"]:
                     sender = data["sender"]["login"]
                     org = data["organization"]["login"]
-                    repofull = data["pull_request"]["head"]["repo"]["full_name"]
+                    repofull = data["repository"]["full_name"]
                     message = "{0} has {1} a pull request in {2}".format(sender, action, repofull)
                     schannel = None
                     for channel in shinobu.get_all_channels():
