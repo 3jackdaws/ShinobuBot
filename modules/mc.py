@@ -212,7 +212,7 @@ def register_commands(ShinobuCommand):
         global mc_server
         status = mc_server.status()
         output = "Current system load: {}%".format(psutil.cpu_percent())
-        output += "\nCurrent system used memory: {}%".format((psutil.virtual_memory().percent*10))
+        output += "\nCurrent system used memory: {}%".format((psutil.virtual_memory().percent))
         output += "\nPlayers online: [{}]".format(status.players.online)
         output += "\nLatency : {} ms".format(status.latency)
         await shinobu.send_message(message.channel, output)
