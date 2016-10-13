@@ -24,11 +24,11 @@ def write_config(self):
 
 def reload_config(self):
     import json
-    infile = open('resources/shinobu_config.json', 'a+')
-    infile.seek(0)
+    infile = open('resources/shinobu_config.json', 'r')
     try:
         self.config = json.load(infile)
-    except:
+    except json.JSONDecodeError:
+        infile = open(open('resources/shinobu_config.json', 'w'))
         self.config = {
                         "modules":["ShinobuBase", "MessageLog","ShinobuCommands", "TicTacToe", "RegexResponse", "TalkBack", "ReminderScheduler", "AudioPlayer"],
                         "safemode":["ShinobuBase", "MessageLog"],
@@ -86,11 +86,10 @@ def load_module(self, module_name):
     try:
         mod = __import__(module_name)
         mod = reloadmod(mod)
+        print("{0}, Version {1}".format(mod.__name__, mod.version))
         mod.accept_shinobu_instance(self)
         if hasattr(mod, "register_commands"):
             mod.register_commands(ShinobuCommand)
-        print("{0}, Version {1}".format(mod.__name__, mod.version))
-
         self.loaded_modules.append(mod)
         return True
     except ImportError as e:
