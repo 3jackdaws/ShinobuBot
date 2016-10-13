@@ -30,7 +30,7 @@ def accept_shinobu_instance(i: discord.Client):
                     sender = data["sender"]["login"]
                     org = data["organization"]["login"]
                     repofull = data["repository"]["full_name"]
-                    url = data["pull_request"]["url"]
+                    url = data["pull_request"]["html_url"]
                     message = "**{0}** has {1} a pull request in {2}\n{3}".format(sender, action, repofull, url)
                     schannel = None
                     for channel in shinobu.get_all_channels():
@@ -50,8 +50,14 @@ channels = []
 
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Register a Pull Request notifier")
-    async def addpullrec(message: discord.Message, arguments: str):
-        pass
+    async def gh_notify(message: discord.Message, arguments: str):
+        subcommand = arguments.rsplit(" ")[0]
+        if subcommand == "link":
+            channel_id = arguments.rsplit(" ")[1][2:-1]
+            print(channel_id)
+            org = arguments.rsplit(" ")[2]
+            print(org)
+            
 
 
 
