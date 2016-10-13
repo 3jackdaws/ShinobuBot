@@ -31,8 +31,12 @@ def accept_shinobu_instance(i: discord.Client):
                     org = data["organization"]["login"]
                     repofull = data["pull_request"]["head"]["repo"]["full_name"]
                     message = "{0} has {1} a pull request in {2}".format(sender, action, repofull)
-                    channel = shinobu.get_channel(232224215175004160)
-                    shinobu.quick_send(channel, message)
+                    schannel = None
+                    for channel in shinobu.get_all_channels():
+                        if "neon-aesthetic" in channel.name:
+                            schannel = channel
+                            break
+                    shinobu.quick_send(schannel, message)
                 return "Shinobu Github Endpoint"
             return
     raise ImportWarning("ShinobuEndpointService must be present for the GithubNotifications module to function")
