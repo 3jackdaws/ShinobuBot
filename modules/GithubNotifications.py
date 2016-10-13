@@ -12,8 +12,6 @@ def write_config():
 def load_config():
     global channels
 
-def send_message(message):
-
 
 
 def accept_shinobu_instance(i: discord.Client):
