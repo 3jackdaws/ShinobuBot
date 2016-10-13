@@ -22,6 +22,7 @@ def accept_shinobu_instance(i: discord.Client):
                 print("Github endpoint accessed")
                 data = module.request.get_json()
                 dump = open("resources/github_data.json", "w")
+                print(data)
                 import json
                 json.dump(data, dump, indent=2)
                 print(dump["sender"]["login"])
