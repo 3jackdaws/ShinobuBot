@@ -13,8 +13,8 @@ def load_config():
     global channels
 
 def send_message(message):
-    channel = shinobu.get_channel(232224215175004160)
-    asyncio.ensure_future(shinobu.send_message(channel, message))
+
+
 
 def accept_shinobu_instance(i: discord.Client):
     global shinobu, server_thread
@@ -33,7 +33,8 @@ def accept_shinobu_instance(i: discord.Client):
                     org = data["organization"]["login"]
                     repofull = data["pull_request"]["head"]["repo"]["full_name"]
                     message = "{0} has {1} a pull request in {2}".format(sender, action, repofull)
-                    send_message(message)
+                    channel = shinobu.get_channel(232224215175004160)
+                    asyncio.ensure_future(shinobu.send_message(channel, message))
                 return "Shinobu Github Endpoint"
             return
     raise ImportWarning("ShinobuEndpointService must be present for the GithubNotifications module to function")
