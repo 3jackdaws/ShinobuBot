@@ -7,14 +7,15 @@ async def accept_message(message:discord.Message):
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Lists all of the available commands")
     async def commands(message: discord.Message, arguments: str):
-        output = "***COMMANDS***\n"
+
         for module in sorted(shinobu.command_description):
+            output = ""
             output += ("\n  - - -  **{0}**  - - -  \n".format(module))
             for command in sorted(shinobu.command_description[module]):
                 desc = "No description provided"
                 desc = shinobu.command_description[module][command]
                 output += (("." + command + "").ljust(10) + " - " + desc + "\n")
-        await shinobu.send_message(message.channel, output + "")
+            await shinobu.send_message(message.channel, output + "")
 
     @ShinobuCommand("Lists all loaded modules")
     async def modules(message: discord.Message, arguments: str):
