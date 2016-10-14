@@ -15,7 +15,7 @@ def register_commands(ShinobuCommand):
                 desc = "No description provided"
                 desc = shinobu.command_description[module][command]
                 output += (("." + command + "").ljust(10) + " - " + desc + "\n")
-            await shinobu.send_message(message.channel, output + "")
+            await shinobu.send_message(message.channel, output)
 
     @ShinobuCommand("Lists all loaded modules")
     async def modules(message: discord.Message, arguments: str):
