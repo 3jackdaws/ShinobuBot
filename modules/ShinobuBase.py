@@ -1,5 +1,6 @@
 import discord
 import glob
+import asyncio
 
 async def accept_message(message:discord.Message):
     pass
@@ -7,15 +8,21 @@ async def accept_message(message:discord.Message):
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Lists all of the available commands")
     async def commands(message: discord.Message, arguments: str):
+        sent = []
+        mcontent = ""
+        module = arguments.rsplit(" ")
+        if module is None:
+            output = "__Use .commands {module name} to see commands for a specific module__\n"
+            for module in sorted(shinobu.command_description):
+                output += ("{0}\n".format(module))
+        else:
+            output = "__{}__".format(module)
+            for command in shinobu.command_description[module]:
+                output += "**{}** - {}\n".format(command, shinobu.command_description[module][command])
+        await shinobu.send_message(message.channel, output)
 
-        for module in sorted(shinobu.command_description):
-            output = ""
-            output += ("\n  - - -  **{0}**  - - -  \n".format(module))
-            for command in sorted(shinobu.command_description[module]):
-                desc = "No description provided"
-                desc = shinobu.command_description[module][command]
-                output += (("." + command + "").ljust(10) + " - " + desc + "\n")
-            await shinobu.send_message(message.channel, output)
+
+
 
     @ShinobuCommand("Lists all loaded modules")
     async def modules(message: discord.Message, arguments: str):
@@ -85,4 +92,4 @@ def accept_shinobu_instance(instance):
     shinobu = instance
 
 version = "1.0.1"
-shinobu = None
+shinobu = None #type: discord.Client

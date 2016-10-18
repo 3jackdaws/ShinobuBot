@@ -19,7 +19,7 @@ def accept_shinobu_instance(i: discord.Client):
     shinobu = i
     for module in shinobu.loaded_modules:
         if hasattr(module, "endpoint"):
-            print("Register gh endpoint")
+            print("Register github endpoint")
             @module.endpoint.route("/github", methods=['POST', 'GET'])
             def github_post():
                 import json

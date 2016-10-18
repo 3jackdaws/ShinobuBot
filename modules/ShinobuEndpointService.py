@@ -1,4 +1,4 @@
-from flask import Flask, request, url_for
+from flask import Flask, request
 from threading import Thread
 import urllib.request
 import discord
