@@ -1,6 +1,7 @@
 import discord
 import threading
 import asyncio
+from classes.Shinobu import Shinobu
 
 
 def write_config():
@@ -11,7 +12,6 @@ def write_config():
 
 def load_config():
     global channels
-
 
 
 def accept_shinobu_instance(i: discord.Client):
@@ -44,7 +44,7 @@ def accept_shinobu_instance(i: discord.Client):
     raise ImportWarning("ShinobuEndpointService must be present for the GithubNotifications module to function")
 
 version = "1.2.0"
-shinobu = None # type: discord.Client
+shinobu = None # type: Shinobu
 channels = []
 
 

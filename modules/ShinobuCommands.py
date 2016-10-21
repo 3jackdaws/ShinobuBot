@@ -68,9 +68,6 @@ def register_commands(ShinobuCommand):
     async def selectopt(message: discord.Message, arguments: str):
         pass
 
-    @ShinobuCommand("Invites Shinobu to your server")
-    async def invite(message: discord.Message, arguments: str):
-        shinobu.accept_invite
 
 
     # @ShinobuCommand("Purges messages according to arguments provided")

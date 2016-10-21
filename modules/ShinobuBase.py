@@ -1,3 +1,4 @@
+from classes.Shinobu import Shinobu
 import discord
 import glob
 import asyncio
@@ -10,15 +11,15 @@ def register_commands(ShinobuCommand):
     async def commands(message: discord.Message, arguments: str):
         sent = []
         mcontent = ""
-        module = arguments.rsplit(" ")
-        if module is None:
+        module = arguments.rsplit(" ")[0]
+        if module == "":
             output = "__Use .commands {module name} to see commands for a specific module__\n"
-            for module in sorted(shinobu.command_description):
+            for module in shinobu.command_descriptions:
                 output += ("{0}\n".format(module))
         else:
-            output = "__{}__".format(module)
-            for command in shinobu.command_description[module]:
-                output += "**{}** - {}\n".format(command, shinobu.command_description[module][command])
+            output = "__{}__\n".format(module)
+            for command in shinobu.command_descriptions[module]:
+                output += "**{}** - {}\n".format(command, shinobu.command_descriptions[module][command])
         await shinobu.send_message(message.channel, output)
 
 
@@ -49,7 +50,7 @@ def register_commands(ShinobuCommand):
             await shinobu.send_message(message.channel, ">tries to reload config\n>isn't owner\n>mfw no face")
             return
         start = await shinobu.send_message(message.channel, "Reloading config")
-        mods = shinobu.reload_all()
+        mods = shinobu.load_all()
         await shinobu.edit_message(start, "Loaded {0} modules".format(mods))
 
     @ShinobuCommand("Tells Shinobu to load or reload a specified module")
@@ -58,12 +59,30 @@ def register_commands(ShinobuCommand):
         if not shinobu.author_is_owner(message):
             await shinobu.send_message(message.channel, ">tries to load mod\n>isn't owner")
             return
-        start = await shinobu.send_message(message.channel, "Loading module {0}".format(arguments))
-        if shinobu.reload_module(arguments):
-            text = "Loaded module {0}"
+        text = ""
+        if arguments == "*":
+            import os
+            module_pool = glob.glob(os.path.dirname(__file__) + "/*")
+            for module in module_pool:
+                if ".py" in module:
+                    load = True
+                    module = os.path.basename(module)[:-3]
+                    for mod in shinobu.loaded_modules:
+                        if mod.__name__ == module:
+                            load = False
+                            break
+                    if load and shinobu.reload_module(module):
+                        text += "Loaded module {0}\n".format(module)
+                    elif load:
+                        text += "Failed loading module {0}\n".format(module)
+            await shinobu.send_message(message.channel, text)
         else:
-            text = "Failed loading module {0}"
-        await shinobu.edit_message(start, text.format(arguments))
+            start = await shinobu.send_message(message.channel, "Loading module {0}".format(arguments))
+            if shinobu.reload_module(arguments):
+                text = "Loaded module {0}".format(arguments)
+            else:
+                text = "Failed loading module {0}".format(arguments)
+            await shinobu.edit_message(start, text)
 
     @ShinobuCommand("Tells Shinobu to load or reload a specified module")
     async def unload(message: discord.Message, arguments: str):
@@ -92,4 +111,4 @@ def accept_shinobu_instance(instance):
     shinobu = instance
 
 version = "1.0.1"
-shinobu = None #type: discord.Client
+shinobu = None #type: Shinobu
