@@ -14,7 +14,7 @@ def load_config():
     global channels
 
 
-def accept_shinobu_instance(i: discord.Client):
+def accept_shinobu_instance(i: Shinobu):
     global shinobu, server_thread
     shinobu = i
     for module in shinobu.loaded_modules:
