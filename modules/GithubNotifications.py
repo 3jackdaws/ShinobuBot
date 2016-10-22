@@ -22,10 +22,9 @@ def accept_shinobu_instance(i: discord.Client):
             print("Register github endpoint")
             @module.endpoint.route("/github", methods=['POST', 'GET'])
             def github_post():
-                import json
                 print("Github endpoint accessed")
                 data = module.request.get_json()
-                if "action" in data:
+                if data and "action" in data:
                     action = data["action"]
                     if action in ["assigned", "opened", "edited", "closed", "reopened"]:
                         sender = data["sender"]["login"]
