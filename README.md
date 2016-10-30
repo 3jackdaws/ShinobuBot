@@ -8,6 +8,8 @@ Shinobu is built to be extensible and modular.  Features are added by creating n
 ##Docker
 `docker pull 3jackdaws/shinobu`
 
+`docker run -itp 55000 -p 5000 --name shinobu 3jackdaws/shinobu`
+
 Mount a volume at /etc/shinobu if you want to change config or add modules.
 
 #Linux
