@@ -1,5 +1,5 @@
 #!/bin/bash
-#Shinobu Startup Script
+#Shinobu Startup Script for docker
 
 if [ -e "/etc/shinobu/Shinobu.py" ];then
 	cd /etc/shinobu

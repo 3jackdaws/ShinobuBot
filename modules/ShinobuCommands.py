@@ -56,17 +56,21 @@ def register_commands(ShinobuCommand):
     async def who(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "ShinobuBot on {0}".format(shinobu.config["instance name"]))
 
-    @ShinobuCommand("Modifies config")
-    async def setoption(message: discord.Message, arguments: str):
-        option = arguments.rsplit(" ")[0]
-        value = re.search("'[\s\S]+?'", arguments)
-        if option in shinobu.config:
-            shinobu.config[option] = value
-        await shinobu.send_message(message.channel, "Config option '{}' set to '{}'".format(option, value))
+    @ShinobuCommand("Posts the link to the documentation on Github")
+    async def docs(message: discord.Message, arguments: str):
+        await shinobu.send_message(message.channel, "Documentation is located at:\nhttps://github.com/3jackdaws/ShinobuBot/wiki/Full-Command-List")
 
-    @ShinobuCommand("Modifies config")
-    async def selectopt(message: discord.Message, arguments: str):
-        pass
+            # @ShinobuCommand("Modifies config")
+    # async def setoption(message: discord.Message, arguments: str):
+    #     option = arguments.rsplit(" ")[0]
+    #     value = re.search("'[\s\S]+?'", arguments)
+    #     if option in shinobu.config:
+    #         shinobu.config[option] = value
+    #     await shinobu.send_message(message.channel, "Config option '{}' set to '{}'".format(option, value))
+    #
+    # @ShinobuCommand("Modifies config")
+    # async def selectopt(message: discord.Message, arguments: str):
+    #     pass
 
 
 
