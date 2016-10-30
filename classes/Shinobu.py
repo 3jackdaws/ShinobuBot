@@ -28,6 +28,7 @@ class Shinobu(discord.Client):
         for mod in self.loaded_modules:
             if mod.__name__ == module_name:
                 if hasattr(mod, "cleanup"):
+                    print("Cleanup {}".format(mod.__name__))
                     mod.cleanup()
                 self.loaded_modules.remove(mod)
                 if module_name in self.command_descriptions:
@@ -69,7 +70,9 @@ class Shinobu(discord.Client):
         print("Attempting to load [{0}] modules".format(len(self.config["modules"])))
         self.command_list = {}
         self.command_descriptions = {}
-        for module in self.loaded_modules:
+        while len(self.loaded_modules) > 0:
+            module = self.loaded_modules[0]
+            print("Unloading {}".format(module.__name__))
             self.unload_module(module.__name__)
         self.loaded_modules = []
         for module in self.config["modules"]:
@@ -105,7 +108,7 @@ class Shinobu(discord.Client):
                 if hasattr(module, "cleanup"):
                     module.cleanup()
                 self.loaded_modules.remove(module)
-                if  module_name in self.command_descriptions:
+                if module_name in self.command_descriptions:
                     self.command_descriptions[module_name] = {}
                 return True
         return False

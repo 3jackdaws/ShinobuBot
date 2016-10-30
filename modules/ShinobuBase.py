@@ -50,6 +50,7 @@ def register_commands(ShinobuCommand):
             await shinobu.send_message(message.channel, ">tries to reload config\n>isn't owner\n>mfw no face")
             return
         start = await shinobu.send_message(message.channel, "Reloading config")
+        print("Modules loaded: ", shinobu.loaded_modules)
         mods = shinobu.load_all()
         await shinobu.edit_message(start, "Loaded {0} modules".format(mods))
 

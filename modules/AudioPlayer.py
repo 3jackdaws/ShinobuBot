@@ -4,6 +4,7 @@ import discord.opus
 import youtube_dl
 import asyncio
 import re
+from classes import Shinobu
 
 
 class ShinobuAudioContainer:
@@ -25,7 +26,7 @@ class ShinobuAudioContainer:
         return self.slength
 
 class ShinobuStreamPlayer:
-    def __init__(self, client:discord.Client):
+    def __init__(self, client:Shinobu):
         self.client = client # type: discord.Client
         self.channel = None
         self.text_channel = None
@@ -66,6 +67,7 @@ class ShinobuStreamPlayer:
 
     async def notify(self):
         if self.current is None and len(self.audio_queue) > 0:
+            print("Getting next song")
             next = self.audio_queue.pop() # type: ShinobuAudioContainer
             message = await shinobu.send_message(self.text_channel, "Buffering {}".format(next.title))
             self.current = await next.streamplayer(self.voice_client)
@@ -74,6 +76,7 @@ class ShinobuStreamPlayer:
             self.current.start()
             self.remove_message(message, 5)
         if self.current is not None and self.current.is_done():
+            print("Song Done notify next")
             self.current = None
             await self.notify()
 
@@ -82,7 +85,6 @@ class ShinobuStreamPlayer:
         self.audio_queue.append(audio_container)
 
     async def enter_channel(self, channel:discord.Channel):
-        print(channel.type)
         if channel.type is discord.enums.ChannelType.voice:
             if self.channel == channel:
                 return
@@ -90,9 +92,11 @@ class ShinobuStreamPlayer:
                 await self.voice_client.disconnect()
             self.channel = channel
             try:
+                print("Trying to enter channel")
                 self.voice_client = await self.client.join_voice_channel(channel)
             except discord.ClientException as e:
-                pass
+                print("Could not enter channel")
+                print(e)
             self.end_player_thread()
         else:
             raise discord.DiscordException(Exception("Channel is not a voice channel"))
@@ -104,7 +108,7 @@ class ShinobuStreamPlayer:
             return True
         return False
 
-version = "0.0.3"
+version = "0.0.4"
 
 async def accept_message(message:discord.Message):
     pass
@@ -118,9 +122,18 @@ def accept_shinobu_instance(instance):
 shinobu = None # type: discord.Client
 stream_player = None # type: ShinobuStreamPlayer
 
+
 def cleanup():
-    if stream_player.voice_client is not None and stream_player.voice_client.is_connected():
-        asyncio.ensure_future(stream_player.voice_client.disconnect())
+    print("AudioPlayer cleanup")
+    server_list = []
+    for channel in shinobu.get_all_channels():
+        if channel.server not in server_list:
+            server_list.append(channel.server)
+    print(server_list)
+    for server in server_list:
+        if shinobu.voice_client_in(server):
+            asyncio.ensure_future(shinobu.voice_client_in(server).disconnect())
+
 
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Lists media in the queue")
@@ -140,7 +153,7 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand("Tells Shinobu to queue a Youtube video")
     async def pause(message: discord.Message, arguments: str):
         if stream_player.current is not None:
-            if stream_player.current.is_playing:
+            if stream_player.current.is_playing():
                 stream_player.current.pause()
             else:
                 stream_player.current.resume()
@@ -155,6 +168,7 @@ def register_commands(ShinobuCommand):
             await shinobu.send_message(message.channel, "You must be in a voice channel to use that command.")
         elif not stream_player.in_channel(channel):
             print("Not in channel")
+            print("Entering")
             await stream_player.enter_channel(channel)
         conf = await shinobu.send_message(message.channel, "Getting information...")
         stream_player.set_text_channel(message.channel)
@@ -176,7 +190,9 @@ def register_commands(ShinobuCommand):
         async def get_stream_player(voice_client:discord.VoiceClient):
             ydl.download([arguments])
             file = re.sub("[a-z]+?$", "opus", filename)
-            return voice_client.create_ffmpeg_player(file, use_avconv=True)
+            def after():
+                asyncio.ensure_future(stream_player.notify())
+            return voice_client.create_ffmpeg_player(file, use_avconv=True, after=after)
 
         await shinobu.edit_message(conf, "**<@{0}>** added **{1}** to the queue\n({2})".format(message.author.id, title, arguments))
 
