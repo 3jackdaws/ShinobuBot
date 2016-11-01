@@ -1,24 +1,23 @@
+from classes.Shinobu import Shinobu
 import discord
 import re
 async def accept_message(message:discord.Message):
     pass
 
 def accept_shinobu_instance(instance):
-    global shinobu, operators
-    shinobu = instance
-    try:
-        operators = shinobu.config['minecraft_operators']
-    except:
-        operators = []
+    global shinobu
+    shinobu = instance # type: Shinobu
+
 
 
 
 version = "0.0.3"
-shinobu = None # type: discord.Client
+shinobu = None # type: Shinobu
 
 def register_commands(ShinobuCommand):
     @ShinobuCommand("purges all")
     async def purge(message:discord.Message, arguments:str):
-        channel = message.channel
-        limit = int(arguments)
-        await shinobu.purge_from(channel, limit=limit)
+        if shinobu.author_is_owner(message):
+            channel = message.channel
+            limit = int(arguments)
+            await shinobu.purge_from(channel, limit=limit)

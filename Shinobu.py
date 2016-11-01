@@ -29,7 +29,7 @@ async def on_message(message:discord.Message):
                 if shinobu.idle:
                     shinobu.idle = False
                     await shinobu.change_presence(status=discord.Status.online)
-                    await shinobu.send_message(message.channel, "ShinobuBot on {0} checking in".format(socket.gethostname()))
+                    await shinobu.send_message(message.channel, "ShinobuBot on {0} checking in".format(shinobu.config["instance name"]))
                     print("UNPAUSED")
                 else:
                     shinobu.idle = True
@@ -49,8 +49,8 @@ async def on_message(message:discord.Message):
                 if hasattr(module, "accept_message"):
                     await module.accept_message(message)
             except Exception as e:
-                await shinobu.send_message(message.channel, "There seems to be a problem with the {0} module".format(module.__name__))
-                await shinobu.send_message(message.channel,("[{0}]: " + str(e)).format(module.__name__))
+                await shinobu.send_message(shinobu.config["owner"], "There seems to be a problem with the {0} module".format(module.__name__))
+                await shinobu.send_message(shinobu.config["owner"],("[{0}]: " + str(e)).format(module.__name__))
                 print(sys.exc_info()[0])
                 print(sys.exc_traceback)
 

@@ -4,7 +4,7 @@ import discord.opus
 import youtube_dl
 import asyncio
 import re
-from classes import Shinobu
+from classes.Shinobu import Shinobu
 
 
 class ShinobuAudioContainer:
@@ -46,6 +46,7 @@ class ShinobuStreamPlayer:
         if self.stream_player is not None and self.stream_player.is_alive:
             self.stream_player.stop()
             self.stream_player.join()
+            self.stream_player = None
 
     def author_voice_channel(author: discord.Member):
         for channel in shinobu.get_all_channels():
@@ -158,18 +159,31 @@ def register_commands(ShinobuCommand):
             else:
                 stream_player.current.resume()
 
+    @ShinobuCommand("Tells Shinobu to stop and leave")
+    async def stop(message: discord.Message, arguments: str):
+        global stream_player
+        if stream_player is not None and stream_player.in_channel():
+            print("Stopping player")
+            stream_player.audio_queue = []
+            if stream_player.current is not None:
+                stream_player.current.stop()
+            stream_player.channel = None
+            await stream_player.voice_client.disconnect()
+            stream_player.end_player_thread()
+
     @ShinobuCommand("Tells Shinobu to queue a Youtube video")
     async def yt(message: discord.Message, arguments: str):
         await shinobu.delete_message(message)
         global stream_player # type: ShinobuStreamPlayer
         channel = ShinobuStreamPlayer.author_voice_channel(message.author)
-        print("Channel", channel)
         if channel is None:
             await shinobu.send_message(message.channel, "You must be in a voice channel to use that command.")
+            return
         elif not stream_player.in_channel(channel):
-            print("Not in channel")
-            print("Entering")
+            print("Entering channel {}".format(channel))
             await stream_player.enter_channel(channel)
+        else:
+            print("Already in channel {}".format(channel))
         conf = await shinobu.send_message(message.channel, "Getting information...")
         stream_player.set_text_channel(message.channel)
         ydl_opts = {
@@ -188,7 +202,7 @@ def register_commands(ShinobuCommand):
 
 
         async def get_stream_player(voice_client:discord.VoiceClient):
-            ydl.download([arguments])
+            ydl.download([arguments], )
             file = re.sub("[a-z]+?$", "opus", filename)
             def after():
                 asyncio.ensure_future(stream_player.notify())

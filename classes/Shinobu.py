@@ -116,3 +116,6 @@ class Shinobu(discord.Client):
     def quick_send(self, channel:discord.Channel, message):
         print("Quick sending: [{0}] {1}".format(channel.name, message))
         asyncio.ensure_future(self.send_message(channel, message), loop=self.loop)
+
+    def invoke(self, coroutine:asyncio.futures.Future):
+        asyncio.ensure_future(coroutine, loop=self.loop)
