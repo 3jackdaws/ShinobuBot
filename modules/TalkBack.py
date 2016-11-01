@@ -11,7 +11,7 @@ def get_response(phrase):
 
 async def accept_message(message:discord.Message):
     global last_to_me, last_was_question
-    if shinobu.user in message.mentions or "shinobu" in message.content.lower() or last_was_question or (last_to_me and "you" in message.content):
+    if shinobu.user in message.mentions or "shinobu" in message.content.lower() or last_was_question or (last_to_me and ("you" in message.content or "?" in message.content)):
         last_to_me = True
         phrase = re.sub("<@227710246334758913>", "you", message.content.lower())
         # phrase = re.sub("shinobu", "you", message.content)
