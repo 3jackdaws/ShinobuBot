@@ -12,7 +12,7 @@ async def accept_message(message:discord.Message):
             last_was_question = True
         else:
             last_was_question = False
-        await shinobu.send_message(message.channel,)
+        await shinobu.send_message(message.channel, response)
     else:
         last_to_me = False
         last_was_question = False
