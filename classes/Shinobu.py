@@ -81,10 +81,11 @@ class Shinobu(discord.Client):
         return len(self.loaded_modules)
 
     def reload_config(self):
-        infile = open(self.config_directory + 'shinobu_config.json', 'r')
+
         try:
+            infile = open(self.config_directory + 'shinobu_config.json', 'r')
             self.config = json.load(infile)
-        except json.JSONDecodeError:
+        except IOError:
             infile = open(self.config_directory + 'shinobu_config.json', 'w')
             self.config = {
                 "modules": ["ShinobuBase", "MessageLog", "ShinobuCommands", "TicTacToe", "RegexResponse", "TalkBack",

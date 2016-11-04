@@ -34,5 +34,5 @@ def accept_shinobu_instance(i: discord.Client):
 
 last_to_me = False
 last_was_question = False
-version = "1.0.0"
+version = "1.2.3"
 shinobu = None
