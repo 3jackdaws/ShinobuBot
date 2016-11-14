@@ -1,4 +1,5 @@
 import discord
+from classes.Shinobu import Shinobu
 import resources
 import glob
 import os
@@ -15,9 +16,6 @@ def accept_shinobu_instance(instance):
 shinobu = None # type: discord.Client
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Echos the text after the command to the same channel")
-    async def echo(message:discord.Message, arguments:str):
-        await shinobu.send_message(message.channel, arguments)
 
     @ShinobuCommand("Announces a message in the default channel of all servers")
     async def broadcast(message:discord.Message, arguments:str):
@@ -54,35 +52,30 @@ def register_commands(ShinobuCommand):
 
     @ShinobuCommand("Says what system Shinobu is running on")
     async def who(message: discord.Message, arguments: str):
-        await shinobu.send_message(message.channel, "ShinobuBot on {0}".format(shinobu.config["instance name"]))
+        await shinobu.send_message(message.channel, "*Tuturu!* Shinobu desu.\n[{0}]".format(shinobu.config["instance name"]))
 
     @ShinobuCommand("Posts the link to the documentation on Github")
     async def docs(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "Documentation is located at:\nhttps://github.com/3jackdaws/ShinobuBot/wiki/Full-Command-List")
 
-            # @ShinobuCommand("Modifies config")
-    # async def setoption(message: discord.Message, arguments: str):
-    #     option = arguments.rsplit(" ")[0]
-    #     value = re.search("'[\s\S]+?'", arguments)
-    #     if option in shinobu.config:
-    #         shinobu.config[option] = value
-    #     await shinobu.send_message(message.channel, "Config option '{}' set to '{}'".format(option, value))
-    #
-    # @ShinobuCommand("Modifies config")
-    # async def selectopt(message: discord.Message, arguments: str):
-    #     pass
+    @ShinobuCommand("Posts the link to the documentation on Github")
+    async def ban(message: discord.Message, arguments: str):
+        if shinobu.author_is_owner(): return
+
+        member_id = re.search("[0-9]+").group()[0]
+        print(member_id)
+        for member in shinobu.get_all_members():
+            if member.id == member_id:
+                shinobu.invoke(shinobu.ban(member, delete_message_days=0))
+
+    @ShinobuCommand("Posts the link to the documentation on Github")
+    async def kick(message: discord.Message, arguments: str):
+        if not shinobu.author_is_owner(message): return
+        member_id = re.search("[0-9]+", message.content).group()
+        print(member_id)
+        for member in shinobu.get_all_members():
+            if member.id == member_id:
+                print("Kicking ",member.name)
+                shinobu.invoke(shinobu.kick(member))
 
 
-
-    # @ShinobuCommand("Purges messages according to arguments provided")
-    # async def purge(message: discord.Message, arguments: str):
-    #     user=re.findall("(?<=user=)\<@[0-9]+\>", arguments)
-    #     pattern = re.findall("(?<=pattern=)\"[\s\S]+\"", arguments)
-    #     limit = re.findall("(?<=limit=)[0-9]+", arguments)
-    #     nodelete = re.search(" nodelete", arguments) is not None
-    #     channel = message.channel
-    #     limit = int(limit)
-    #     check = None
-    #     if pattern is not None:
-    #         check=lambda x:re.search(pattern, x) is not None
-    #     await shinobu.purge_from(channel, check=check,limit=limit)

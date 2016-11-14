@@ -20,6 +20,7 @@ class Shinobu(discord.Client):
         self.loop = asyncio.get_event_loop()
         self.config_directory = config_directory
         self.loaded_modules = []
+        self.propagate = True
         self.config = {}
 
         sys.path.append("./modules")
@@ -120,3 +121,11 @@ class Shinobu(discord.Client):
 
     def invoke(self, coroutine:asyncio.futures.Future):
         asyncio.ensure_future(coroutine, loop=self.loop)
+
+    def stop_propagation(self):
+        raise StopPropagationException(__name__)
+
+
+
+class StopPropagationException(Exception):
+    pass
