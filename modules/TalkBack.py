@@ -11,7 +11,7 @@ def get_response(phrase):
     return json.loads(urlopen(req).read().decode("utf-8"))["response"]
 
 def compute_certainty(message:discord.Message):
-    global last_was_question, proximity
+    global last_was_question, proximity, proximity
     # blob = TextBlob(message.content)
     # for word in blob.words:
     #     print(word)
@@ -36,6 +36,7 @@ def compute_e_state(message:discord.Message):
     return sentiment
 
 def emoji_from_estate(estate):
+    global propagate
     if estate < -0.65:
         propagate = False
         return "\n:rage:"
