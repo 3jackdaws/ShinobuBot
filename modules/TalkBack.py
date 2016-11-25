@@ -62,8 +62,10 @@ def register_commands(ShinobuCommand):
     async def debug(message: discord.Message, arguments: str):
         global debug
         if debug:
+            debug = False
             await shinobu.send_message(message.channel, "Debug is now OFF")
         else:
+            debug = True
             await shinobu.send_message(message.channel, "Debug is now ON")
 
 
@@ -74,9 +76,9 @@ async def accept_message(message:discord.Message):
     if certainty >= certainty_threshold:
         await shinobu.send_typing(message.channel)
         phrase = re.sub("<@227710246334758913>", "you", message.content.lower())
-        print(phrase)
+        # print(phrase)
         response = get_response(phrase)
-        print(response)
+        print("Shinobu: ",response)
         last_was_question = "?" in response
         e_state += compute_e_state(message)
         emoji = emoji_from_estate(e_state)
@@ -108,6 +110,6 @@ last_was_question = False
 propagate = True
 emotion_memory = {}
 debug = False
-version = "1.2.5"
+version = "1.2.6"
 shinobu = None  # type: Shinobu
 
