@@ -82,6 +82,8 @@ async def accept_message(message:discord.Message):
         print("Shinobu: ",response)
         last_was_question = "?" in response
         e_state += compute_e_state(message)
+        if e_state > 1:
+            e_state = 1;
         emoji = emoji_from_estate(e_state)
         await shinobu.send_message(message.channel, response + emoji)
         if debug: await shinobu.send_message(message.channel, "E-Val: {}\nProximity: {}\nCertainty: {}".format(e_state, proximity, certainty))
