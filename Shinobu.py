@@ -5,15 +5,12 @@ import sys
 shinobu = Shinobu("resources/")
 
 
-
-shinobu.reload_config()
-shinobu.load_all()
-
 @shinobu.event
 async def on_ready():
     print('Logged in as:', shinobu.user.name)
     print('-------------------------')
-    # print(loaded_modules)
+    shinobu.reload_config()
+    shinobu.load_all()
 
 
 @shinobu.event
@@ -40,9 +37,11 @@ async def on_message(message:discord.Message):
                 arguments = " ".join(message.content.rsplit(" ")[1:])
                 if command in shinobu.command_list:
                     await shinobu.command_list[command](message, arguments)
+                if arguments == "rm":
+                    await shinobu.delete_message(message)
 
         if message.author.id == shinobu.user.id: return;
-        if shinobu.idle == True: return
+        if shinobu.idle: return
 
         for module in shinobu.loaded_modules:
             try:
@@ -61,6 +60,7 @@ async def on_message(message:discord.Message):
             arguments = " ".join(message.content.rsplit(" ")[1:])
             if command in shinobu.command_list:
                 await shinobu.command_list[command](message, arguments)
+
     except StopPropagationException as e:
         print("Module", e, " has prevented message propagation")
 

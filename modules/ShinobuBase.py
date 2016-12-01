@@ -14,13 +14,15 @@ def register_commands(ShinobuCommand):
         module = arguments.rsplit(" ")[0]
         if module == "":
             output = "__Use .commands {module name} to see commands for a specific module__\n"
-            for module in shinobu.command_descriptions:
-                output += ("{0}\n".format(module))
+            await shinobu.send_message(message.channel, output)
+            await shinobu.send_message(message.channel, "!modules rm")
+            # for module in shinobu.command_descriptions:
+            #     output += ("{0}\n".format(module))
         else:
             output = "__{}__\n".format(module)
             for command in shinobu.command_descriptions[module]:
                 output += "**{}** - {}\n".format(command, shinobu.command_descriptions[module][command])
-        await shinobu.send_message(message.channel, output)
+            await shinobu.send_message(message.channel, output)
 
 
 

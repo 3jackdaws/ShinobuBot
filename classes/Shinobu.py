@@ -127,5 +127,6 @@ class Shinobu(discord.Client):
 
 
 
+
 class StopPropagationException(Exception):
     pass

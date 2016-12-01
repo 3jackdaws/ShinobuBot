@@ -77,11 +77,14 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand("Gets weekly stats for the provided repo")
     async def stats(message: discord.Message, arguments: str):
         att_repo = arguments
-        for repo in config['managed_repos']:
-            if re.search(att_repo, repo.lower()) is not None:
-                await shinobu.send_typing(message.channel)
-                stats = compute_stats(repo)
-                await shinobu.send_message(message.channel, format_stats(stats))
+        if len(att_repo) > 1:
+            for repo in config['managed_repos']:
+                if re.search(att_repo, repo.lower()) is not None:
+                    await shinobu.send_typing(message.channel)
+                    stats = compute_stats(repo)
+                    await shinobu.send_message(message.channel, format_stats(stats))
+                    return
+        await shinobu.send_message(message.channel, "Unknown repo: {}".format(att_repo))
 
     @ShinobuCommand("Removes a repository from this modules")
     async def remove_repository(message: discord.Message, arguments: str):
