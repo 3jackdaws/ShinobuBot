@@ -67,10 +67,31 @@ def register_commands(ShinobuCommand):
             await shinobu.send_message(message.channel, "Reminder scheduled for {0} Pacific Time".format(datestring))
             write_reminder()
 
+def get_reminder_text(message):
+    text = None
+    text = re.search("remind me to ([a-z0-9 -_]+)(in|at|$)", message)
+    if text:
+        text = text[0]
+    else:
+        text = re.search("remind me \".+\"", message)
+    return text
 
+def get_second_offset(message):
+    text_lower = message.content.lower()
+    absolute = re.search(" at ([0-9:]+[am|pm]?)")
+
+    if absolute:
+        pass
+    else:
+        relative = re.search(" in ")
 
 async def accept_message(message:discord.Message):
-    pass
+    text_lower = message.content.lower()
+    is_reminder = "remind me" in text_lower
+
+    if is_reminder:
+        reminder_text = get_reminder_text(message.content)
+        second_offset = get_second_offset(message.content)
 
 
 def accept_shinobu_instance(i:discord.Client):
