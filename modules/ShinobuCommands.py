@@ -60,7 +60,7 @@ def register_commands(ShinobuCommand):
 
     @ShinobuCommand("Posts the link to the documentation on Github")
     async def ban(message: discord.Message, arguments: str):
-        if shinobu.author_is_owner(): return
+        if not shinobu.author_is_owner(): return
 
         member_id = re.search("[0-9]+").group()[0]
         print(member_id)
