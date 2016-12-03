@@ -4,7 +4,6 @@ import re
 from urllib.request import urlopen, Request
 import json
 import time
-import plotly.plotly as plot
 
 def form_request(url):
     r = Request(url)
