@@ -14,8 +14,7 @@ import json
 class Shinobu(discord.Client):
     def __init__(self, config_directory:str):
         super(Shinobu,self).__init__()
-        self.command_list = {}
-        self.command_descriptions = {}
+        self.command_list = []
         self.idle = False
         self.loop = asyncio.get_event_loop()
         self.config_directory = config_directory
@@ -24,6 +23,33 @@ class Shinobu(discord.Client):
         self.config = {}
 
         sys.path.append("./modules")
+    def get_command(self, command):
+        for com in self.command_list:
+            if com["command"] == command:
+                return com
+
+        return None
+
+    def can_exec(self, user, command:dict):
+        if "owner" in command['permissions']:
+            if str(user.id) == self.config['owner']:
+                return True
+        elif "bot" in command['permissions']:
+            if str(user.id) == self.user.id:
+                return True
+        elif "all" in command['permissions']:
+            return True
+        return False
+
+    def exec(self, command, message:discord.Message):
+        for com in self.command_list:
+            if com['command'] == command:
+                print(com['command'])
+                if self.can_exec(message.author, com):
+                    arguments = " ".join(message.content.rsplit(" ")[1:])
+                    self.invoke(com['function'](message, arguments))
+                else:
+                    self.invoke(self.send_message(message.channel, "You don't have permission to use that command"))
 
     def reload_module(self, module_name:str):
         for mod in self.loaded_modules:
@@ -48,19 +74,22 @@ class Shinobu(discord.Client):
             print(str(e))
             return False
 
-    def Command(self, description:str):
+    def Command(self, description:str, permissions = ["owner"]):
         def register_command(command_function):
-            self.command_list[command_function.__name__] = command_function
-            if not command_function.__module__ in self.command_descriptions:
-                self.command_descriptions[command_function.__module__] = {}
-            self.command_descriptions[command_function.__module__][command_function.__name__] = description
+            self.command_list.append({
+                "command":command_function.__name__,
+                "function":command_function,
+                "permissions":permissions,
+                "module":command_function.__module__,
+                "description":description
+            })
             return command_function
         return register_command
 
     def load_safemode_mods(self):
         self.loaded_modules = []
         self.command_descriptions = {}
-        self.command_list = {}
+        self.command_list = []
         for modname in self.config["safemode"]:
             self.reload_module(modname)
         return len(self.loaded_modules)
@@ -69,7 +98,7 @@ class Shinobu(discord.Client):
         print("####  Loading Config  ####")
         self.reload_config()
         print("Attempting to load [{0}] modules".format(len(self.config["modules"])))
-        self.command_list = {}
+        self.command_list = []
         self.command_descriptions = {}
         while len(self.loaded_modules) > 0:
             module = self.loaded_modules[0]

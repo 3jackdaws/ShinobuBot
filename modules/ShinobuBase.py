@@ -7,7 +7,7 @@ async def accept_message(message:discord.Message):
     pass
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Lists all of the available commands")
+    @ShinobuCommand("Lists all of the available commands", ["all"])
     async def commands(message: discord.Message, arguments: str):
         sent = []
         mcontent = ""
@@ -19,15 +19,19 @@ def register_commands(ShinobuCommand):
             # for module in shinobu.command_descriptions:
             #     output += ("{0}\n".format(module))
         else:
-            output = "__{}__\n".format(module)
-            for command in shinobu.command_descriptions[module]:
-                output += "**{}** - {}\n".format(command, shinobu.command_descriptions[module][command])
-            await shinobu.send_message(message.channel, output)
+            title = "__{}__\n".format(module)
+            output = ""
+            for command in shinobu.command_list:
+                if command['module'] == module:
+                    output += "**{}** - {}\n".format(command['command'], command['description'])
+            if output == "":
+                output = "Module not loaded."
+            await shinobu.send_message(message.channel, title + output)
 
 
 
 
-    @ShinobuCommand("Lists all loaded modules")
+    @ShinobuCommand("Lists all loaded modules", ["all"])
     async def modules(message: discord.Message, arguments: str):
         output = ""
         if arguments == "available":
@@ -46,7 +50,7 @@ def register_commands(ShinobuCommand):
                 output += ("**{0}** - Version {1}\n".format(module.__name__, module.version))
         await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Tells Shinobu to reload her configuration")
+    @ShinobuCommand("Tells Shinobu to reload her configuration", ["owner", "bot"])
     async def reload(message: discord.Message, arguments: str):
         if not shinobu.author_is_owner(message):
             await shinobu.send_message(message.channel, ">tries to reload config\n>isn't owner\n>mfw no face")

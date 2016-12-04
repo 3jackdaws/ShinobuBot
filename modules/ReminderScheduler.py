@@ -55,12 +55,22 @@ def calc_second_offset(time):
     alert = datetime.datetime.strptime(time, "%I:%M%p")
     return (alert - now).total_seconds()
 
+def screen_message(text, author):
+    commands = re.findall("![a-z_]+", text)
+    for comm in commands:
+        com_dict = shinobu.get_command(comm[1:])
+        if "permissions" in com_dict:
+            if not shinobu.can_exec(author, shinobu.get_command(comm[1:])):
+                return comm
+    return None
+
 def init_reminders():
     global reminders, reminder_count
     stored_reminders = json.load(open(shinobu.config_directory + "reminders.json"))
     for reminder in stored_reminders:
         id = reminder["id"]
-        if reminder_count < id: reminder_count = id
+        if reminder_count < id:
+            reminder_count = id
         queue_reminder(reminder)
 
 def write_reminders():
@@ -71,20 +81,30 @@ def write_reminders():
 
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Schedule a message: .schedule \"message\" for [me|@mention|#channel] [single|repeat [daily|weekly|monthly]] [8:00PM]")
+    @ShinobuCommand("", ["all"])
+    async def test(message: discord.Message, arguments: str):
+        screen_message(arguments)
+
+    @ShinobuCommand("Schedule a message: .schedule \"message\" for [me|@mention|#channel] [single|repeat [daily|weekly|monthly]] [8:00PM]", ["all"])
     async def schedule(message: discord.Message, arguments: str):
         text = re.findall("\"(.+)\"", arguments)[0]
-        multiple = re.findall("(single|repeat)", arguments)[0]
+        try:
+            multiple = re.findall("(single|repeat)", arguments)[0]
+        except:
+            multiple = "single"
         frequency = None
         if multiple == "repeat":
             frequency = re.findall("(daily|weekly|monthly)", arguments)
         time = re.search("([:0-9]+(am|pm))", arguments.lower()).group()
         who = re.findall("for ([@#\<\>!0-9]+)", arguments)[0]
         to = get_channel_object(who)
+        bad_command = screen_message(text, message.author)
         if to is None:
             await shinobu.send_message(message.channel, "I could not find {}".format(who))
+        elif bad_command is not None:
+            await shinobu.send_message(message.channel, "You are not allowed to use the {} command.".format(bad_command))
         else:
-            print(datetime.datetime.strptime(time))
+            # print(datetime.datetime.strptime(time))
             reminder = {
                 "message": text,
                 "time": time,
@@ -98,17 +118,13 @@ def register_commands(ShinobuCommand):
 
 
 
-    @ShinobuCommand("Shows all scheduled reminder_list")
+    @ShinobuCommand("Shows all scheduled reminders", ['all'])
     async def reminders(message:discord.Message, arguments:str):
-        global reminder_list
+        global reminders
         output = "**Reminders for <@{0}>**\n".format(message.author.id)
-        if message.author.id not in reminder_list:
-            output = "You have no scheduled reminders"
-        else:
-            for reminder in reminder_list[message.author.id]:
-                # print(reminder[0].microsecond)
-                datestring = datetime.datetime.fromtimestamp(reminder[0]).strftime("%-I:%M:%S%p on %b %-d, %Y")
-                output += "__{0}__ - {1}\n".format(reminder[1], datestring)
+        for reminder in reminders:
+            if reminder["author_id"] == message.author.id:
+                output+="\"{}\" for {} at {}\n".format(reminder['message'], reminder['to'], reminder["time"])
         await shinobu.send_message(message.channel, output)
 
 

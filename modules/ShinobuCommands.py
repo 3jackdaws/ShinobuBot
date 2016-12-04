@@ -4,6 +4,8 @@ import resources
 import glob
 import os
 import re
+import asyncio
+from math import floor
 version = "1.2.7"
 
 async def accept_message(message:discord.Message):
@@ -25,7 +27,7 @@ def register_commands(ShinobuCommand):
             if channel.is_default:
                 await shinobu.send_message(channel, arguments)
 
-    @ShinobuCommand("Posts a message in a channel that a user doesn't have access to")
+    @ShinobuCommand("Posts a message in a channel that a user doesn't have access to", ['all'])
     async def tell(message:discord.Message, arguments:str):
         originating_server = message.server
         given_message = arguments.rsplit(" ")[1:]
@@ -38,7 +40,7 @@ def register_commands(ShinobuCommand):
                 return
         await shinobu.send_message(message.channel, "Could not find channel {}".format(requested_channel))
 
-    @ShinobuCommand("All channels on the server")
+    @ShinobuCommand("All channels on the server", ["all"])
     async def channels(message: discord.Message, arguments: str):
         output = "**Channels on this server:**\n__Text__\n"
         for channel in message.server.channels:
@@ -50,11 +52,11 @@ def register_commands(ShinobuCommand):
                 output += (channel.name + "\n")
         await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Says what system Shinobu is running on")
+    @ShinobuCommand("Says what system Shinobu is running on", ['all'])
     async def who(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "*Tuturu!* Shinobu desu.\n[{0}]".format(shinobu.config["instance name"]))
 
-    @ShinobuCommand("Posts the link to the documentation on Github")
+    @ShinobuCommand("Posts the link to the documentation on Github", ["all"])
     async def docs(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "Documentation is located at:\nhttps://github.com/3jackdaws/ShinobuBot/wiki/Full-Command-List")
 
@@ -77,5 +79,6 @@ def register_commands(ShinobuCommand):
             if member.id == member_id:
                 print("Kicking ",member.name)
                 shinobu.invoke(shinobu.kick(member))
+
 
 

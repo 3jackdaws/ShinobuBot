@@ -35,8 +35,7 @@ async def on_message(message:discord.Message):
             elif message.author.id == shinobu.user.id:
                 command = message.content.rsplit(" ")[0][1:]
                 arguments = " ".join(message.content.rsplit(" ")[1:])
-                if command in shinobu.command_list:
-                    await shinobu.command_list[command](message, arguments)
+                shinobu.exec(command, message)
                 if arguments == "rm":
                     await shinobu.delete_message(message)
 
@@ -58,8 +57,7 @@ async def on_message(message:discord.Message):
         if message.content[0] is ".":
             command = message.content.rsplit(" ")[0][1:]
             arguments = " ".join(message.content.rsplit(" ")[1:])
-            if command in shinobu.command_list:
-                await shinobu.command_list[command](message, arguments)
+            shinobu.exec(command, message)
 
     except StopPropagationException as e:
         print("Module", e, " has prevented message propagation")

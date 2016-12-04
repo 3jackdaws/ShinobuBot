@@ -73,7 +73,7 @@ def format_stats(stats):
     return first
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Registers a repo with this module")
+    @ShinobuCommand("Registers a repo with this module", ['all'])
     async def register_repository(message: discord.Message, arguments: str):
         repo_name = arguments
         if repo_name not in config['managed_repos']:
@@ -87,7 +87,7 @@ def register_commands(ShinobuCommand):
         else:
             await shinobu.send_message(message.channel, "Repository with name {0} has already been registered by <@{1}>".format(repo_name, config["managed_repos"][repo_name]["owner"]))
 
-    @ShinobuCommand("Gets stats for the provided repo\n.stats repo_name num_days")
+    @ShinobuCommand("Gets stats for the provided repo\n.stats repo_name num_days", ['all'])
     async def stats(message: discord.Message, arguments: str):
         att_repo = arguments.rsplit()[0]
         try:
@@ -103,7 +103,7 @@ def register_commands(ShinobuCommand):
                     return
         await shinobu.send_message(message.channel, "Unknown repo: {}".format(att_repo))
 
-    @ShinobuCommand("Removes a repository from this modules")
+    @ShinobuCommand("Removes a repository from this modules", ['all'])
     async def remove_repository(message: discord.Message, arguments: str):
         global config
         att_repo = arguments
