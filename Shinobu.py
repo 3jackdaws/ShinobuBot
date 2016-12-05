@@ -16,6 +16,7 @@ async def on_ready():
 @shinobu.event
 async def on_message(message:discord.Message):
     try:
+        if shinobu.idle: return
         if message.content[0] == "!":
             if shinobu.author_is_owner(message):
                 if message.content.rsplit(" ")[0] == "!safemode":
@@ -40,7 +41,6 @@ async def on_message(message:discord.Message):
                     await shinobu.delete_message(message)
 
         if message.author.id == shinobu.user.id: return;
-        if shinobu.idle: return
 
         for module in shinobu.loaded_modules:
             try:
