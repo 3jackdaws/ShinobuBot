@@ -139,8 +139,7 @@ class Shinobu(discord.Client):
                 if hasattr(module, "cleanup"):
                     module.cleanup()
                 self.loaded_modules.remove(module)
-                if module_name in self.command_descriptions:
-                    self.command_descriptions[module_name] = {}
+
                 return True
         return False
 

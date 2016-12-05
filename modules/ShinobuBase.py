@@ -86,6 +86,8 @@ def register_commands(ShinobuCommand):
         else:
             start = await shinobu.send_message(message.channel, "Loading module {0}".format(arguments))
             if shinobu.reload_module(arguments):
+                shinobu.config["modules"].append(arguments)
+                shinobu.write_config()
                 text = "Loaded module {0}".format(arguments)
             else:
                 text = "Failed loading module {0}".format(arguments)
@@ -99,6 +101,8 @@ def register_commands(ShinobuCommand):
             return
         start = await shinobu.send_message(message.channel, "Unloading module {0}".format(arguments))
         if shinobu.unload_module(arguments):
+            shinobu.config["modules"].remove(arguments)
+            shinobu.write_config()
             text = "Unloaded module {0}"
         else:
             text = "Failed unloading module {0}"

@@ -11,14 +11,13 @@ from math import floor
 version = "1.2.7"
 
 async def accept_message(message:discord.Message):
-    if "cuck" in message.content or "cuckold" in message.content:
-        await shinobu.delete_message(message)
+    pass
 
 def accept_shinobu_instance(instance):
     global shinobu
     shinobu = instance
 
-shinobu = None # type: discord.Client
+shinobu = None # type: Shinobu
 
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Rolls n dice. By default, five.", ["all"])
@@ -89,13 +88,72 @@ def register_commands(ShinobuCommand):
 
     @ShinobuCommand("Posts the link to the documentation on Github")
     async def weather(message: discord.Message, arguments: str):
-        url = "http://api.wunderground.com/api/{}/geolookup/conditions/q/OR/Klamath_Falls.json".format(shinobu.config['wu_token'])
-        kf_json = json.loads(urlopen(url).read().decode("utf-8"))
-        weath = kf_json["current_observation"]["weather"]
-        temp = kf_json["current_observation"]["temp_f"]
-        emoji = ""
-        if "rain" in weath.lower():
-            emoji = ":cloud_rain:"
-        await shinobu.send_message(message.channel, "**Klamath Falls, OR**\n{0} {1} {0}\n{2}°F".format(emoji, weath, round(temp)))
+        got_json = False
+        while not got_json:
+            url = "http://api.wunderground.com/api/{}/geolookup/conditions/q/OR/Klamath_Falls.json".format(shinobu.config['wu_token'])
+            site_text = urlopen(url).read().decode("utf-8")
+            kf_json = json.loads(site_text)
+            try:
+                weath = kf_json["current_observation"]["weather"]
+                temp = kf_json["current_observation"]["temp_f"]
+                got_json = True
 
+                emoji = ""
+                if "rain" in weath.lower():
+                    emoji = ":cloud_rain:"
+                elif "overcast" in weath.lower():
+                    emoji = ":cloud:"
+                elif "clear" in weath.lower():
+                    emoji = ":cityscape:"
+                elif "sunny" in weath.lower():
+                    emoji = ":sunny:"
+                await shinobu.send_message(message.channel, "**Klamath Falls, OR**\n{0} {1} {0}\n{2}°F".format(emoji, weath, round(temp)))
+            except:
+                pass
+
+    @ShinobuCommand("Spam")
+    async def spam(message: discord.Message, arguments: str):
+        try:
+            person = message.mentions[0]
+            try:
+                amount = arguments.rsplit()[0]
+            except:
+                amount = 10
+            for i in range(amount):
+                await asyncio.sleep(1)
+                await shinobu.send_message(message.channel, arguments)
+        except:
+            pass
+
+    @ShinobuCommand("Posts the link to the documentation on Github")
+    async def config(message: discord.Message, arguments: str):
+        key = arguments.rsplit()[0]
+        value = json.loads("".join(arguments.rsplit()[1:]))
+        shinobu.config[key] = value
+        await shinobu.send_message(message.channel, "Changed property {} to {}".format(key, str(shinobu.config[key])))
+        shinobu.write_config()
+
+    @ShinobuCommand(".purge @mention til_message_id")
+    async def purge(message: discord.Message, arguments: str):
+        if shinobu.author_is_owner(message):
+            args = arguments.rsplit()
+            print("Purging")
+            channel = message.channel
+            who = args[0]
+            ref = args[1]
+            if who == "@everyone":
+                def is_after(m):
+                    return m.id > args[1]
+            else:
+                try:
+                    who = message.mentions[0]
+                except:
+                    await shinobu.send_message(message.channel, "The second parameter must be a mention or everyone.")
+                    return
+                def is_after(m):
+                    user = message.mentions[0]
+                    return user == m.author and m.id > ref
+
+            num_del = len(await shinobu.purge_from(channel, check=is_after))
+            await shinobu.send_message(message.channel, "Deleted {} messages.".format(num_del))
 

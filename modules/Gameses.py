@@ -60,9 +60,9 @@ def register_commands(ShinobuCommand):
         max = 6 * num_dice
         percent = round((total/(max))*100)
         await shinobu.send_message(message.channel, results.format(total, max, percent))
-        if percent > 85:
+        if percent > 80:
             say = "Exceptional Roll!"
-        elif percent > 70:
+        elif percent > 69:
             say = "Good Roll!"
         else:
             return
