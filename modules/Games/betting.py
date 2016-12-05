@@ -52,10 +52,10 @@ config.assure("accounts", [])
 config.assure("store_items", [])
 
 
-def create_user(user):
+def create_user(user_id):
     record = {
-        "mention": "<@{}>".format(user.id),
-        "id": user.id,
+        "mention": "<@{}>".format(user_id),
+        "id": user_id,
         "balance": 10,
         "holds": 0
     }
