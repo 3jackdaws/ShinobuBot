@@ -13,7 +13,9 @@ def accept_shinobu_instance(instance):
 shinobu = None # type: Shinobu
 version = "1.0.0"
 
+
 def register_commands(ShinobuCommand):
+
     @ShinobuCommand("Rolls n dice. By default, five.", ["all"])
     async def roll(message: discord.Message, arguments: str):
         lookup = {
@@ -56,7 +58,15 @@ def register_commands(ShinobuCommand):
             if max_num > 1:
                 results = pre + results
         max = 6 * num_dice
-        await shinobu.send_message(message.channel, results.format(total, max, round((total/(max))*100)))
+        percent = round((total/(max))*100)
+        await shinobu.send_message(message.channel, results.format(total, max, percent))
+        if percent > 85:
+            say = "Exceptional Roll!"
+        elif percent > 70:
+            say = "Good Roll!"
+        else:
+            return
+        await shinobu.send_message(message.channel, say)
 
     @ShinobuCommand("Flips a coin", ["all"])
     async def flip(message: discord.Message, arguments: str):
@@ -70,3 +80,13 @@ def register_commands(ShinobuCommand):
         f = randint(0,1)
         await asyncio.sleep(1)
         await shinobu.send_message(message.channel, text[f])
+
+    @ShinobuCommand("Flips a coin", ["all"])
+    async def farmptt(message: discord.Message, arguments: str):
+        spb = None
+        for mem in shinobu.get_all_members():
+            if mem.id == "255139669577170954":
+                spb = mem
+        while 1:
+            msg = await shinobu.wait_for_message(content="**BANG**")
+            await shinobu.send_message(message.channel, "pull the trigger")

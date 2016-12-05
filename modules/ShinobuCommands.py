@@ -4,12 +4,15 @@ import resources
 import glob
 import os
 import re
+import json
+from urllib.request import urlopen
 import asyncio
 from math import floor
 version = "1.2.7"
 
 async def accept_message(message:discord.Message):
-    pass
+    if "cuck" in message.content or "cuckold" in message.content:
+        await shinobu.delete_message(message)
 
 def accept_shinobu_instance(instance):
     global shinobu
@@ -18,6 +21,10 @@ def accept_shinobu_instance(instance):
 shinobu = None # type: discord.Client
 
 def register_commands(ShinobuCommand):
+    @ShinobuCommand("Rolls n dice. By default, five.", ["all"])
+    async def chars(message: discord.Message, arguments: str):
+        print(message.content.encode("utf-8"))
+        await shinobu.send_message(message.channel, re.sub("!([a-z])", "\1", arguments))
 
     @ShinobuCommand("Announces a message in the default channel of all servers")
     async def broadcast(message:discord.Message, arguments:str):
@@ -80,5 +87,15 @@ def register_commands(ShinobuCommand):
                 print("Kicking ",member.name)
                 shinobu.invoke(shinobu.kick(member))
 
+    @ShinobuCommand("Posts the link to the documentation on Github")
+    async def weather(message: discord.Message, arguments: str):
+        url = "http://api.wunderground.com/api/{}/geolookup/conditions/q/OR/Klamath_Falls.json".format(shinobu.config['wu_token'])
+        kf_json = json.loads(urlopen(url).read().decode("utf-8"))
+        weath = kf_json["current_observation"]["weather"]
+        temp = kf_json["current_observation"]["temp_f"]
+        emoji = ""
+        if "rain" in weath.lower():
+            emoji = ":cloud_rain:"
+        await shinobu.send_message(message.channel, "**Klamath Falls, OR**\n{0} {1} {0}\n{2}°F".format(emoji, weath, round(temp)))
 
 

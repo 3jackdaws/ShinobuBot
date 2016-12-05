@@ -21,7 +21,7 @@ def accept_shinobu_instance(i:discord.Client):
     shinobu = i
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Invoke the TicTacToe module")
+    @ShinobuCommand("Invoke the TicTacToe module", ['all'])
     async def ttt(message:discord.Message, arguments:str):
         if arguments.rsplit(" ")[0].isdigit():
             await commands["place"](message, arguments)
