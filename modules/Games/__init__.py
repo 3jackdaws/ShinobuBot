@@ -64,7 +64,7 @@ def register_commands(ShinobuCommand):
         output = "Top 10 Balances:\n```"
         for account in sorted(betting.get_all_accounts(), key=lambda x:x['balance'], reverse=True):
             member = message.server.get_member(account['id'])
-            output+= "{:<20} Balance: [{}]\n".format(member.nick, round(account['balance'], 2))
+            output+= "{:20} Balance: [{}]\n".format(member.name, round(account['balance'], 2))
 
         await shinobu.send_message(message.channel, output + "```")
 
