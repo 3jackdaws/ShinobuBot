@@ -6,6 +6,7 @@ betting = reloadmod(betting)
 import discord
 from classes.Shinobu import Shinobu
 import asyncio
+from math import floor
 from random import randint
 
 version = "1.0.0"
@@ -13,7 +14,13 @@ version = "1.0.0"
 
 
 async def accept_message(message:discord.Message):
-    pass
+    chance, new = betting.get_user_balance(message.author.id)
+    chance = floor(chance + 1)**2
+    num = randint(0,chance)
+    print(chance, num)
+    if num == 0:
+        await shinobu.send_message(message.channel, "Congrats! You've earned a protocredit.")
+        betting.credit_user(message.author, 1)
 
 def accept_shinobu_instance(instance):
     global shinobu
@@ -101,3 +108,18 @@ def register_commands(ShinobuCommand):
             print(e)
             output = "You don't have enough protocredits to bet."
         await shinobu.send_message(message.channel, output)
+
+    @ShinobuCommand("Rolls n dice. By default, five.", ["owner"])
+    async def credit(message: discord.Message, arguments: str):
+        args = arguments.rsplit()
+        try:
+            num = float(args[1])
+            user = message.mentions[0]
+            betting.credit_user(user, num)
+            await shinobu.send_message(message.channel, "Credited <@{}> {} protocredits.".format(user.id, num))
+        except:
+            pass
+
+
+
+

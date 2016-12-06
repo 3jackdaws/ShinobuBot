@@ -61,6 +61,12 @@ def create_user(user_id):
     }
     return record
 
+def credit_user(user, amnt):
+    for record in config["accounts"]:
+        if record['id'] == user.id:
+            record['balance'] += amnt
+            config.save()
+
 bet_example = {
     "game":["flip", "roll"],
     "amount":100
