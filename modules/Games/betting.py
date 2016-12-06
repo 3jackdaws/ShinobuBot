@@ -20,7 +20,6 @@ class Bet:
         global user_records
         self._has_begun = True
         if not self.user_exists():
-            print("Adding user")
             config["accounts"].append(create_user(self.user.id))
         if not get_user_balance(self.user.id)[0] > self.bet:
             raise Exception("User does not have enough balance for that bet")
@@ -40,7 +39,6 @@ class Bet:
         for record in config["accounts"]:
             if record['id'] == self.user.id:
                 record['balance'] += balance_amnt
-                config.save()
 
     def calculate_win_amount(self, bet, odds):
         return odds * bet
@@ -50,6 +48,7 @@ class Bet:
 config = ConfigManager("resources/accounts.json")
 config.assure("accounts", [])
 config.assure("store_items", [])
+
 
 
 def create_user(user_id):
@@ -78,7 +77,7 @@ game_return_example = {
     "win":True
 }
 
-config['store_items'] = []
+
 
 def get_user_balance(user_id):
     global user_records
@@ -86,7 +85,6 @@ def get_user_balance(user_id):
         if record['id'] == user_id:
             return record['balance'], False
     config["accounts"].append(create_user(user_id))
-    config.save()
     return 10, True
 
 def get_all_accounts():

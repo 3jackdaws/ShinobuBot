@@ -21,6 +21,7 @@ class Shinobu(discord.Client):
         self.loaded_modules = []
         self.propagate = True
         self.config = {}
+        self.log = lambda x,y: print(x,y)
 
         sys.path.append("./modules")
     def get_command(self, command):
@@ -58,8 +59,6 @@ class Shinobu(discord.Client):
                     print("Cleanup {}".format(mod.__name__))
                     mod.cleanup()
                 self.loaded_modules.remove(mod)
-                if module_name in self.command_descriptions:
-                    self.command_descriptions[module_name] = {}
                 break
         try:
             mod = __import__(module_name)
@@ -99,7 +98,6 @@ class Shinobu(discord.Client):
         self.reload_config()
         print("Attempting to load [{0}] modules".format(len(self.config["modules"])))
         self.command_list = []
-        self.command_descriptions = {}
         while len(self.loaded_modules) > 0:
             module = self.loaded_modules[0]
             print("Unloading {}".format(module.__name__))
@@ -152,6 +150,7 @@ class Shinobu(discord.Client):
 
     def stop_propagation(self):
         raise StopPropagationException(__name__)
+
 
 
 

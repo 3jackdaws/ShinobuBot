@@ -2,7 +2,8 @@ import discord
 from random import random
 import math
 import re
-ShinobuCommand = None
+from classes.Shinobu import Shinobu
+
 
 
 
@@ -17,11 +18,11 @@ def choose_from(choices:list):
 async def accept_message(message:discord.Message):
     if message.content[0].isalpha():
         response = get_reponse(message.content.lower())
-        if response is not None:
-            try:
-                await shinobu.send_message(message.channel, response)
-            except:
-                pass
+        if response == "{{FILTER}}":
+            await shinobu.delete_message(message)
+        elif response is not None:
+            await shinobu.send_message(message.channel, response)
+
 
 
 
@@ -51,7 +52,14 @@ def accept_shinobu_instance(i:discord.Client):
 
 def register_commands(ShinobuCommand):
 #####START REGISTER COMMANDS
-    @ShinobuCommand("Tells Shinobu to learn a paired response")
+    @ShinobuCommand("Tells Shinobu automatically delete matched messages", ["owner"])
+    async def filter(message: discord.Message, arguments: str):
+        if add_response(arguments, "{{FILTER}}"):
+            write_patterns()
+        else:
+            await shinobu.send_message(message.channel, "That type of pattern is not allowed.")
+
+    @ShinobuCommand("Tells Shinobu to learn a paired response", ['owner'])
     async def learn(message: discord.Message, arguments: str):
         components = arguments.split("|")
         if len(components) < 2:
@@ -63,7 +71,7 @@ def register_commands(ShinobuCommand):
             else:
                 await shinobu.send_message(message.channel, "That type of pattern is not allowed.")
 #####NEXT COMMAND
-    @ShinobuCommand("Tells Shinobu to unlearn a paired response")
+    @ShinobuCommand("Tells Shinobu to unlearn a paired response", ['owner'])
     async def unlearn(message: discord.Message, arguments: str):
         for pair in patterned_responses:
             if pair[0] == arguments:
@@ -71,14 +79,14 @@ def register_commands(ShinobuCommand):
         write_patterns()
 
 #####NEXT COMMAND
-    @ShinobuCommand("Tells Shinobu to unlearn a paired response and never learn it again")
+    @ShinobuCommand("Tells Shinobu to unlearn a paired response and never learn it again", ['owner'])
     async def block(message: discord.Message, arguments: str):
         for pair in patterned_responses:
             if pair[0] == arguments:
                 pair[1] = None
         write_patterns()
 #####NEXT COMMAND
-    @ShinobuCommand("Looks up the pair that a specific message matches to")
+    @ShinobuCommand("Looks up the pair that a specific message matches to", ['all'])
     async def relookup(message: discord.Message, arguments: str):
         for pair in patterned_responses:
             if pair[1] == None: continue
@@ -120,7 +128,7 @@ def get_reponse(message):
 
 
 version = "1.0.0"
-shinobu = None
+shinobu = None #type: Shinobu
 patterned_responses = []
 compiled_patterns = []
 load_patterns()

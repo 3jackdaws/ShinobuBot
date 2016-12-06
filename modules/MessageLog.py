@@ -1,12 +1,25 @@
 import discord
+from logging import Logger
+import datetime
 
 async def accept_message(message:discord.Message):
-    print("------" + message.author.name + "------", "\n" + message.content + "\n")
+    log(message.channel.name, "{}: {}".format(message.author.name, message.content))
 
 def register_commands(ShinobuCommand):
     pass
 
 def accept_shinobu_instance(i):
-    pass
+    i.log = log
 
-version = "1.0.1"
+version = "1.0.4"
+log_file = open("resources/serverlog.log", "a+")
+
+def log(module, msg):
+    global log_file
+    time = datetime.datetime.now().strftime("%H:%I:%S")
+    log_line = "[{}][{}] {}".format(time, module, msg)
+    print(log_line)
+    log_file.write(log_line)
+
+def cleanup():
+    log_file.close()

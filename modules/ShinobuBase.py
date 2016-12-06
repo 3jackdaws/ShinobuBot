@@ -21,15 +21,16 @@ def register_commands(ShinobuCommand):
         else:
             title = "__{}__\n".format(module)
             output = ""
-            for command in shinobu.command_list:
+            for command in sorted(shinobu.command_list, key=lambda x:x["command"]):
                 if command['module'] == module:
                     output += "**{}** - {}\n".format(command['command'], command['description'])
             if output == "":
                 output = "Module not loaded."
             await shinobu.send_message(message.channel, title + output)
 
-
-
+    @ShinobuCommand("Alias for .commands", ["all"])
+    async def help(message: discord.Message, arguments: str):
+        await shinobu.send_message(message.channel, "!commands")
 
     @ShinobuCommand("Lists all loaded modules", ["all"])
     async def modules(message: discord.Message, arguments: str):
@@ -56,7 +57,7 @@ def register_commands(ShinobuCommand):
             await shinobu.send_message(message.channel, ">tries to reload config\n>isn't owner\n>mfw no face")
             return
         start = await shinobu.send_message(message.channel, "Reloading config")
-        print("Modules loaded: ", shinobu.loaded_modules)
+        # print("Modules loaded: ", shinobu.loaded_modules)
         mods = shinobu.load_all()
         await shinobu.edit_message(start, "Loaded {0} modules".format(mods))
 

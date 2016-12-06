@@ -9,6 +9,12 @@ import asyncio
 from math import floor
 from random import randint
 
+
+
+
+
+
+
 version = "1.0.0"
 
 
@@ -17,7 +23,6 @@ async def accept_message(message:discord.Message):
     chance, new = betting.get_user_balance(message.author.id)
     chance = floor(chance + 1)**2
     num = randint(0,chance)
-    print(chance, num)
     if num == 0:
         await shinobu.send_message(message.channel, "Congrats! You've earned a protocredit.")
         betting.credit_user(message.author, 1)

@@ -10,6 +10,7 @@ class ConfigManager:
             self.config = {}
             self.save()
 
+
     def __setitem__(self, key, value):
         self.config[key] = value
         self.save()
