@@ -51,29 +51,32 @@ class Shinobu(discord.Client):
                     self.invoke(com['function'](message, arguments))
                 else:
                     self.invoke(self.send_message(message.channel, "You don't have permission to use that command"))
+                return
 
     def reload_module(self, module_name:str):
-        for mod in self.loaded_modules:
-            if mod.__name__ == module_name:
-                if hasattr(mod, "cleanup"):
-                    print("Cleanup {}".format(mod.__name__))
-                    mod.cleanup()
-                self.loaded_modules.remove(mod)
-                break
         try:
-            mod = __import__(module_name)
-            mod = reloadmod(mod)
+            mod = None
+            for module in self.loaded_modules:
+                if module.__name__ == module_name:
+                    module = reloadmod(module)
+                    mod = module
+                    for command in self.command_list:
+                        if command['module'] == module_name:
+                            self.command_list.remove(command)
+            if not mod:
+                mod = __import__(module_name)
+                mod = reloadmod(mod)
+                self.loaded_modules.append(mod)
             print("{0}, Version {1}".format(mod.__name__, mod.version))
             mod.accept_shinobu_instance(self)
             if hasattr(mod, "register_commands"):
                 mod.register_commands(self.Command)
-            self.loaded_modules.append(mod)
             return True
         except ImportError as e:
             print(str(e))
             return False
 
-    def Command(self, description:str, permissions = ["owner"]):
+    def Command(self, description:str, permissions = ("owner")):
         def register_command(command_function):
             self.command_list.append({
                 "command":command_function.__name__,
@@ -102,7 +105,7 @@ class Shinobu(discord.Client):
             module = self.loaded_modules[0]
             print("Unloading {}".format(module.__name__))
             self.unload_module(module.__name__)
-        self.loaded_modules = []
+        # self.loaded_modules = []
         for module in self.config["modules"]:
             self.reload_module(module)
         print("##########################\n")
