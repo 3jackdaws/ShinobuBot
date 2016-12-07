@@ -9,8 +9,9 @@ config.assure("filters", [])
 for filter in config["filters"]:
     print(print(filter))
 
-def create_filter(pattern, channels, users, on_delete):
+def create_filter(name, pattern, channels, users, on_delete):
     filter = {
+        "name":name,
         "pattern":pattern,
         "channels":channels,
         "users":users,

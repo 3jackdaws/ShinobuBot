@@ -4,6 +4,7 @@ import asyncio
 from importlib import reload
 import Administration.regex as regex
 regex = reload(regex)
+import re
 
 version = "1.0.0"
 
@@ -52,9 +53,34 @@ def register_commands(ShinobuCommand):
         await shinobu.send_message(message.channel, "What should I say when I remove a message?  Type 'nothing' for no response.")
         resp = await shinobu.wait_for_message(channel=message.channel, author=message.author)
         response = None if resp.content.lower() == "nothing" else resp.content
-        regex.create_filter(pattern, channels, users, response)
 
+        await shinobu.send_message(message.channel,
+                                   "What is the name of this filter?")
+        resp = await shinobu.wait_for_message(channel=message.channel, author=message.author)
+        name = resp.content
+        regex.create_filter(name, pattern, channels, users, response)
 
+    @ShinobuCommand("Shows all filters.  .show_filters with channel_or_user_mention", ["owner"])
+    async def show_filters(message: discord.Message, arguments: str):
+        try:
+            referencing = re.findall("with \<.([0-9]+)", message.content)[0]
+        except:
+            referencing = None
+        print(referencing)
 
+        for filter in regex.config["filters"]:
+            if referencing is None or referencing in filter['users'] or referencing in filter['channels']:
+                output = "\nName: {}\nPattern: {}\nChannels: ".format(filter['name'],filter['pattern'])
+                for chan in filter['channels']:
+                    output+= "<#{}> ".format(chan)
+                output += "\nUsers: "
+                for user in filter['users']:
+                    output+= "<@{}>,".format(user)
+                await shinobu.send_message(message.channel, output + "\n--\n")
 
+    @ShinobuCommand(".remove_filter name", ["owner"])
+    async def remove_filter(message: discord.Message, arguments: str):
+        for filter in regex.config["filters"]:
+            if filter['name'] == arguments:
+                regex.config['filters'].remove(filter)
 

@@ -67,6 +67,16 @@ class CMValue:
             raise TypeError(self.key + " is a dictionary and cannot be appened to")
         self.save()
 
+    def remove(self, item):
+        if isinstance(self.value, list):
+            self.value.remove(item)
+        elif len(self.value) == 0:
+            self.value = []
+            self.value.append(item)
+        else:
+            raise TypeError(self.key + " is a dictionary and cannot be appened to")
+        self.save()
+
 
 
 

@@ -43,6 +43,12 @@ async def on_message(message:discord.Message):
         if shinobu.idle: return
         if message.author.id == shinobu.user.id: return;
 
+        if message.content[0] is ".":
+            command = message.content.rsplit(" ")[0][1:]
+            arguments = " ".join(message.content.rsplit(" ")[1:])
+            shinobu.exec(command, message)
+            return 
+
         for module in shinobu.loaded_modules:
             try:
                 if hasattr(module, "accept_message"):
@@ -55,10 +61,7 @@ async def on_message(message:discord.Message):
                 print(sys.exc_info()[0])
                 print(sys.exc_traceback)
 
-        if message.content[0] is ".":
-            command = message.content.rsplit(" ")[0][1:]
-            arguments = " ".join(message.content.rsplit(" ")[1:])
-            shinobu.exec(command, message)
+
 
     except StopPropagationException as e:
         print("Module", e, " has prevented message propagation")
