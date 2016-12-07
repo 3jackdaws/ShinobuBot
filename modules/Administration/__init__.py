@@ -13,7 +13,9 @@ async def accept_message(message:discord.Message):
     if delete:
         await shinobu.delete_message(message)
         if response:
-            await shinobu.send_message(channel, response)
+            mes = await shinobu.send_message(channel, response)
+            await asyncio.sleep(5)
+            await shinobu.delete_message(mes)
 
 
 
@@ -28,18 +30,29 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand(".filter pattern", ["owner"])
     async def filter(message: discord.Message, arguments: str):
         pattern = arguments
+        if len(pattern) < 2:
+            await shinobu.send_message(message.channel, "The filtered pattern must be more than 1 character")
+            return
         channels = []
+        users = []
         await shinobu.send_message(message.channel, "What channels should this filter apply to? \nType as mentions separated by spaces.")
         resp = await shinobu.wait_for_message(channel=message.channel, author=message.author)
         if "cancel" in resp.content:
             return
+
         for chan in resp.channel_mentions:
             channels.append(chan.id)
+
+        await shinobu.send_message(message.channel,
+                                   "Who should this filter apply to? \nType as mentions separated by spaces.")
+        resp = await shinobu.wait_for_message(channel=message.channel, author=message.author)
+        for user in resp.mentions:
+            users.append(user.id)
 
         await shinobu.send_message(message.channel, "What should I say when I remove a message?  Type 'nothing' for no response.")
         resp = await shinobu.wait_for_message(channel=message.channel, author=message.author)
         response = None if resp.content.lower() == "nothing" else resp.content
-        regex.create_filter(pattern, channels, response)
+        regex.create_filter(pattern, channels, users, response)
 
 
 
