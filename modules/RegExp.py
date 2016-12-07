@@ -18,8 +18,14 @@ def choose_from(choices:list):
 async def accept_message(message:discord.Message):
     if message.content[0].isalpha():
         response = get_reponse(message.content.lower())
-        if response == "{{FILTER}}":
-            await shinobu.delete_message(message)
+        if "[FILTER]" in response:
+            try:
+                channel_name = response.rsplit()[1]
+            except:
+                channel_name = "all"
+            if channel_name == "all" or message.channel.name == channel_name:
+                await shinobu.delete_message(message)
+                shinobu.stop_propagation()
         elif response is not None:
             await shinobu.send_message(message.channel, response)
 
@@ -54,7 +60,13 @@ def register_commands(ShinobuCommand):
 #####START REGISTER COMMANDS
     @ShinobuCommand("Tells Shinobu automatically delete matched messages", ["owner"])
     async def filter(message: discord.Message, arguments: str):
-        if add_response(arguments, "{{FILTER}}"):
+        try:
+            channel = arguments.rsplit()[1]
+            pattern = arguments.rsplit()[0]
+        except:
+            channel = message.channel.name
+            pattern = arguments
+        if add_response(pattern, "[FILTER] " + channel):
             write_patterns()
         else:
             await shinobu.send_message(message.channel, "That type of pattern is not allowed.")

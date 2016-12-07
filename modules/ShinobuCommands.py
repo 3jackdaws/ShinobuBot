@@ -155,5 +155,7 @@ def register_commands(ShinobuCommand):
                     return user == m.author and m.id > ref
 
             num_del = len(await shinobu.purge_from(channel, check=is_after))
-            await shinobu.send_message(message.channel, "Deleted {} messages.".format(num_del))
+            mes = await shinobu.send_message(message.channel, "Deleted {} messages.".format(num_del))
+            await asyncio.sleep(2)
+            await shinobu.delete_message(mes)
 
