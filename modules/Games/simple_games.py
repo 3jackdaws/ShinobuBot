@@ -1,5 +1,5 @@
 import discord
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 from random import randint
 import asyncio
 

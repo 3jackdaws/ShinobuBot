@@ -1,5 +1,5 @@
 import discord
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 import resources
 import glob
 import os
@@ -18,6 +18,12 @@ def accept_shinobu_instance(instance):
     shinobu = instance
 
 shinobu = None # type: Shinobu
+temp_channels = []
+
+def cleanup():
+    global temp_channels
+    for channel in temp_channels:
+        shinobu.invoke(shinobu.delete_channel(channel))
 
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Rolls n dice. By default, five.", ["all"])
@@ -86,7 +92,7 @@ def register_commands(ShinobuCommand):
                 print("Kicking ",member.name)
                 shinobu.invoke(shinobu.kick(member))
 
-    @ShinobuCommand("Posts the link to the documentation on Github")
+    @ShinobuCommand("Gets the current weather for Klamath Falls", ["all"])
     async def weather(message: discord.Message, arguments: str):
         got_json = False
         while not got_json:
@@ -158,4 +164,21 @@ def register_commands(ShinobuCommand):
             mes = await shinobu.send_message(message.channel, "Deleted {} messages.".format(num_del))
             await asyncio.sleep(2)
             await shinobu.delete_message(mes)
+
+    @ShinobuCommand(".temp channel_name @mentions_who_can_join")
+    async def temp_channel(message: discord.Message, arguments: str):
+        server = message.server
+        args = arguments.rsplit()
+        everyone_perms = discord.PermissionOverwrite(read_messages=False)
+        member_perms = discord.PermissionOverwrite(read_messages=True, manage_channels=True)
+        everyone = discord.ChannelPermissions(target=server.default_role, overwrite=everyone_perms)
+
+        access = [discord.ChannelPermissions(target=message.author, overwrite=member_perms), everyone]
+        for person in message.mentions:
+            access.append(discord.ChannelPermissions(target=person, overwrite=member_perms))
+        channel = await shinobu.create_channel(server, args[0], *access)
+        global temp_channels
+        temp_channels.append(channel)
+
+
 

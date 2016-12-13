@@ -2,7 +2,7 @@ from urllib.request import urlopen,Request
 from urllib.parse import urlencode
 import json
 import discord
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 
 def get_ud_definition(word):
     query = urlencode({"term":word})

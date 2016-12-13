@@ -1,5 +1,5 @@
 import discord
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 import asyncio
 from importlib import reload
 import Administration.regex as regex

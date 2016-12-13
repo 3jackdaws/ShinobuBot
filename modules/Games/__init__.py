@@ -4,7 +4,7 @@ simple_games = reloadmod(simple_games)
 import Games.betting as betting
 betting = reloadmod(betting)
 import discord
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 import asyncio
 from math import floor
 from random import randint

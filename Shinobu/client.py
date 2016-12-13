@@ -1,15 +1,10 @@
 
 import discord
 from importlib import reload as reloadmod
-from math import floor
-from random import random
-from glob import glob
-import types
 import sys
-import os
-import socket
 import asyncio
 import json
+from Shinobu.utility import ConfigManager
 
 class Shinobu(discord.Client):
     def __init__(self, config_directory:str):
@@ -20,18 +15,20 @@ class Shinobu(discord.Client):
         self.config_directory = config_directory
         self.loaded_modules = []
         self.propagate = True
-        self.config = {}
+        self.config = ConfigManager(config_directory + "shinobu_config.json")
         self.log = lambda x,y: print(x,y)
-
         sys.path.append("./modules")
+
+
     def get_command(self, command):
         for com in self.command_list:
             if com["command"] == command:
                 return com
-
         return None
 
     def can_exec(self, user, command:dict):
+        print(type(self.config['owner']))
+        print(str(user.id) == self.config['owner'])
         if "owner" in command['permissions']:
             if str(user.id) == self.config['owner']:
                 return True
@@ -90,7 +87,6 @@ class Shinobu(discord.Client):
 
     def load_safemode_mods(self):
         self.loaded_modules = []
-        self.command_descriptions = {}
         self.command_list = []
         for modname in self.config["safemode"]:
             self.reload_module(modname)
@@ -98,7 +94,6 @@ class Shinobu(discord.Client):
 
     def load_all(self):
         print("####  Loading Config  ####")
-        self.reload_config()
         print("Attempting to load [{0}] modules".format(len(self.config["modules"])))
         self.command_list = []
         while len(self.loaded_modules) > 0:
@@ -111,28 +106,12 @@ class Shinobu(discord.Client):
         print("##########################\n")
         return len(self.loaded_modules)
 
-    def reload_config(self):
-
-        try:
-            infile = open(self.config_directory + 'shinobu_config.json', 'r')
-            self.config = json.load(infile)
-        except IOError:
-            infile = open(self.config_directory + 'shinobu_config.json', 'w')
-            self.config = {
-                "modules": ["ShinobuBase", "MessageLog", "ShinobuCommands", "TicTacToe", "RegexResponse", "TalkBack",
-                            "ReminderScheduler", "AudioPlayer"],
-                "safemode": ["ShinobuBase", "MessageLog"],
-                "owner": "142860170261692416",
-                "instance name": "Default Shinobu Instance"
-            }
-            json.dump(self.config, infile, indent=2)
 
     def author_is_owner(self, message):
         return message.author.id == self.config["owner"]
 
     def write_config(self):
-        infile = open(self.config_directory + 'shinobu_config.json', 'w')
-        json.dump(self.config, infile, indent=2)
+        self.config.save()
 
     def unload_module(self, module_name):
         for module in self.loaded_modules:
@@ -151,8 +130,8 @@ class Shinobu(discord.Client):
     def invoke(self, coroutine:asyncio.futures.Future):
         asyncio.ensure_future(coroutine, loop=self.loop)
 
-    def stop_propagation(self):
-        raise StopPropagationException(__name__)
+    def stop_propagation(self, name):
+        raise StopPropagationException(name)
 
 
 

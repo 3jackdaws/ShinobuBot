@@ -1,4 +1,4 @@
-from classes.utility import ConfigManager
+from Shinobu.utility import ConfigManager
 import discord
 import re
 

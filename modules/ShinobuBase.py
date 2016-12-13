@@ -1,11 +1,15 @@
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 import discord
 import glob
 import asyncio
 import os.path
 
 async def accept_message(message:discord.Message):
-    pass
+    if message.content == "!pause":
+        shinobu.idle = True
+    if shinobu.idle:
+        shinobu.stop_propagation(__name__)
+
 
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Lists all of the available commands", ["all"])
@@ -66,7 +70,6 @@ def register_commands(ShinobuCommand):
 
     @ShinobuCommand("Tells Shinobu to reload her configuration", ["owner", "bot"])
     async def reload(message: discord.Message, arguments: str):
-
         start = await shinobu.send_message(message.channel, "Reloading config")
         # print("Modules loaded: ", shinobu.loaded_modules)
         mods = shinobu.load_all()

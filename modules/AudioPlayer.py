@@ -4,7 +4,7 @@ import discord.opus
 import youtube_dl
 import asyncio
 import re
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 
 
 class ShinobuAudioContainer:

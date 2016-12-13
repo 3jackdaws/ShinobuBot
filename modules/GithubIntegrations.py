@@ -1,4 +1,4 @@
-from classes.Shinobu import Shinobu, StopPropagationException
+from Shinobu.client import Shinobu, StopPropagationException
 import discord
 import re
 from urllib.request import urlopen, Request

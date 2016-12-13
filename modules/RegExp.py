@@ -2,7 +2,7 @@ import discord
 from random import random
 import math
 import re
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 
 
 

@@ -2,7 +2,7 @@ import discord
 from urllib.request import urlopen, Request
 import re
 import json
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 from textblob import TextBlob
 
 def get_response(phrase):

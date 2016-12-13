@@ -1,4 +1,4 @@
-from classes.utility import ConfigManager
+from Shinobu.utility import ConfigManager
 
 class Bet:
     def __init__(self, game, bet, user):

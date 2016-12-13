@@ -1,4 +1,4 @@
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 import discord
 import re
 async def accept_message(message:discord.Message):

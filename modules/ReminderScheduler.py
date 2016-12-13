@@ -3,7 +3,7 @@ import re
 import datetime
 import asyncio
 import os
-from classes.Shinobu import Shinobu
+from Shinobu.client import Shinobu
 import json
 
 os.environ['TZ'] = 'America/Los_Angeles'
