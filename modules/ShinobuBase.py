@@ -6,7 +6,8 @@ import os.path
 
 async def accept_message(message:discord.Message):
     if message.content == "!pause":
-        shinobu.idle = True
+        shinobu.idle = not shinobu.idle
+        await shinobu.send_message
     if shinobu.idle:
         shinobu.stop_propagation(__name__)
 

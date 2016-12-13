@@ -50,6 +50,21 @@ class CMValue:
             self.save()
         return wrapper
 
+    def __int__(self):
+        return int(self.value)
+
+    def __add__(self, other):
+        return self.value + other
+
+    def __sub__(self, other):
+        return self.value - other
+
+    def __gt__(self, other):
+        return self.value > other
+
+    def __lt__(self, other):
+        return self.value < other
+
 
     def __setitem__(self, key, value):
         self.value[key] = value
@@ -73,29 +88,16 @@ class CMValue:
     def __len__(self):
         return self.value.__len__()
 
+    def __isub__(self, other):
+        self.value -= other
+        self.save()
+
+    def __iadd__(self, other):
+        self.value += other
+        self.save()
 
     def save(self):
         self.parent[self.key] = self.value
-
-    # def append(self, item):
-    #     if isinstance(self.value, list):
-    #         self.value.append(item)
-    #     elif len(self.value) == 0:
-    #         self.value = []
-    #         self.value.append(item)
-    #     else:
-    #         raise TypeError(self.key + " is a dictionary and cannot be appened to")
-    #     self.save()
-    #
-    # def remove(self, item):
-    #     if isinstance(self.value, list):
-    #         self.value.remove(item)
-    #     elif len(self.value) == 0:
-    #         self.value = []
-    #         self.value.append(item)
-    #     else:
-    #         raise TypeError(self.key + " is a dictionary and cannot be appened to")
-    #     self.save()
 
 
 class Dialog:

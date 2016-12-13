@@ -128,7 +128,7 @@ class Shinobu(discord.Client):
         asyncio.ensure_future(self.send_message(channel, message), loop=self.loop)
 
     def invoke(self, coroutine:asyncio.futures.Future):
-        asyncio.ensure_future(coroutine, loop=self.loop)
+        return asyncio.ensure_future(coroutine, loop=self.loop)
 
     def stop_propagation(self, name):
         raise StopPropagationException(name)

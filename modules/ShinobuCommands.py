@@ -5,25 +5,66 @@ import glob
 import os
 import re
 import json
+import time
 from urllib.request import urlopen
 import asyncio
 from math import floor
+from Shinobu.utility import ConfigManager
 version = "1.2.7"
 
+
+
 async def accept_message(message:discord.Message):
-    pass
-
-def accept_shinobu_instance(instance):
-    global shinobu
-    shinobu = instance
-
-shinobu = None # type: Shinobu
-temp_channels = []
+    reset_channel_timeout(message.channel.id)
 
 def cleanup():
-    global temp_channels
-    for channel in temp_channels:
-        shinobu.invoke(shinobu.delete_channel(channel))
+    global prune_loop
+    if hasattr(prune_loop, "cancel"):
+        print("Stopping prune loop")
+        prune_loop.cancel()
+
+
+
+async def prune_temp_channels():
+    while 1:
+        prune_period = int(config["prune_period"])
+        max_period = int(config['prune_after_seconds'])
+        await asyncio.sleep(prune_period)
+        now = int(time.time())
+        for channel in config["temp_channels"]:
+            time_since_last = now - channel["last"]
+            warn_at = channel['warn_at']
+            if time_since_last > max_period:
+                print("Delete Channel")
+                await shinobu.delete_channel(shinobu.get_channel(channel['id']))
+                config["temp_channels"].remove(channel)
+            elif warn_at and (warn_at - now) < 0:
+                channel['warn_at'] = None
+                await shinobu.send_message(shinobu.get_channel(channel['id']), "This channel will soon be pruned due to inactivity")
+
+def accept_shinobu_instance(instance):
+    global shinobu, prune_loop
+    shinobu = instance
+    prune_loop = shinobu.invoke(prune_temp_channels())
+
+def reset_channel_timeout(channelid):
+    global config
+    for channel in config["temp_channels"]:
+        if channel['id'] == channelid:
+            print("Reset channel timeout for {}".format(channel['name']))
+            channel['last'] = int(time.time())
+
+
+shinobu = None # type: Shinobu
+config = ConfigManager("resources/ShinobuCommands.json")
+config.assure("temp_channels", [])
+config.assure("prune_period", 600)
+config.assure("prune_after_seconds", 3600*24)
+config.assure("warn_time", 600)
+
+prune_loop = None # type: asyncio.futures.Future
+
+
 
 def register_commands(ShinobuCommand):
     @ShinobuCommand("Rolls n dice. By default, five.", ["all"])
@@ -132,7 +173,7 @@ def register_commands(ShinobuCommand):
             pass
 
     @ShinobuCommand("Posts the link to the documentation on Github")
-    async def config(message: discord.Message, arguments: str):
+    async def cconfig(message: discord.Message, arguments: str):
         key = arguments.rsplit()[0]
         value = json.loads("".join(arguments.rsplit()[1:]))
         shinobu.config[key] = value
@@ -177,8 +218,11 @@ def register_commands(ShinobuCommand):
         for person in message.mentions:
             access.append(discord.ChannelPermissions(target=person, overwrite=member_perms))
         channel = await shinobu.create_channel(server, args[0], *access)
-        global temp_channels
-        temp_channels.append(channel)
-
-
-
+        await shinobu.edit_channel(channel, topic="Temporary channel")
+        global config
+        config["temp_channels"].append({
+            "id":channel.id,
+            "name":channel.name,
+            "last":int(time.time()),
+            "warn_at":int(time.time()) + config["prune_after_seconds"].value - config['warn_time'].value
+        })
