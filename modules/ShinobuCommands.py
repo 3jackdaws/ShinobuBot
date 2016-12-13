@@ -165,7 +165,7 @@ def register_commands(ShinobuCommand):
             await asyncio.sleep(2)
             await shinobu.delete_message(mes)
 
-    @ShinobuCommand(".temp channel_name @mentions_who_can_join")
+    @ShinobuCommand(".temp channel_name @mentions_who_can_join", ["all"])
     async def temp_channel(message: discord.Message, arguments: str):
         server = message.server
         args = arguments.rsplit()
