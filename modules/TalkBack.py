@@ -74,7 +74,7 @@ def register_commands(ShinobuCommand):
 async def accept_message(message:discord.Message):
     global last_to_me, last_was_question, e_state, proximity, propagate, debug
     certainty = compute_certainty(message)
-    if certainty >= certainty_threshold:
+    if certainty >= int(certainty_threshold):
         await shinobu.send_typing(message.channel)
         phrase = re.sub("<@227710246334758913>", "you", message.content.lower())
         # print(phrase)

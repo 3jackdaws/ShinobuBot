@@ -27,8 +27,6 @@ class Shinobu(discord.Client):
         return None
 
     def can_exec(self, user, command:dict):
-        print(type(self.config['owner']))
-        print(str(user.id) == self.config['owner'])
         if "owner" in command['permissions']:
             if str(user.id) == self.config['owner']:
                 return True

@@ -6,8 +6,11 @@ import os.path
 
 async def accept_message(message:discord.Message):
     if message.content == "!pause":
-        shinobu.idle = not shinobu.idle
-        await shinobu.send_message
+        shinobu.idle = True
+        await shinobu.send_message(message.channel, "Paused")
+    elif message.content == "!resume":
+        shinobu.idle = False
+        await shinobu.send_message(message.channel, "Resumed")
     if shinobu.idle:
         shinobu.stop_propagation(__name__)
 

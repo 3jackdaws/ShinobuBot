@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 class ConfigManager:
     def __init__(self, config_file, base={}):
@@ -100,16 +101,22 @@ class CMValue:
         self.parent[self.key] = self.value
 
 
-class Dialog:
-    def __init__(self):
-        self.dialog_list = []
+class FuzzyMatch:
+    def __init__(self, iterable):
+        self.collection = iterable
 
-    def add_dialog(self, msg, check=None):
-        dialog = {
-            "say":msg,
-            "check":check
-        }
-        self.dialog_list.append(dialog)
+    def find(self, query_string):
+        results = []
+        for item in self.collection:
+            idx = item.find(query_string)
+            if idx >= 0:
+                results.append((idx, item))
+        final = []
+        for item in sorted(results):
+            final.append(item[1])
+        return final
+
+
 
 
 

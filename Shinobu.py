@@ -48,4 +48,6 @@ async def on_message(message:discord.Message):
         print("Module", e, " has prevented message propagation")
 
 
-shinobu.run('MjI3NzEwMjQ2MzM0NzU4OTEz.CsKHOA.-VMTRbjonKthatdxSldkcByan8M')
+email = str(shinobu.config['email'])
+password = str(shinobu.config['password'])
+shinobu.run(email, password)
