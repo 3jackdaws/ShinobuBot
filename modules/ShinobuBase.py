@@ -3,6 +3,7 @@ import discord
 import glob
 import asyncio
 import os.path
+from Shinobu.utility import FuzzyMatch
 
 async def accept_message(message:discord.Message):
     if message.content == "!pause":
@@ -16,7 +17,7 @@ async def accept_message(message:discord.Message):
 
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Lists all of the available commands", ["all"])
+    @ShinobuCommand("Lists all of the available commands", permissions=('@everyone'))
     async def commands(message: discord.Message, arguments: str):
         sent = []
         mcontent = ""
@@ -37,23 +38,28 @@ def register_commands(ShinobuCommand):
                 output = "Module not loaded."
             await shinobu.send_message(message.channel, title + output)
 
-    @ShinobuCommand("Lists all of the available commands", ["all"])
+    @ShinobuCommand("Lists all of the available commands")
     async def info(message: discord.Message, arguments: str):
-        module_name = arguments
-        for mod in shinobu.loaded_modules:
-            if module_name in mod.__name__.lower():
-                if hasattr(mod, "description"):
-                    output = mod.description
-                else:
-                    output = "Module {} does not have a description.".format(mod.__name__)
-                await shinobu.send_message(message.channel, output)
-                return
+        try:
+            module_name = FuzzyMatch([x['command'] for x in shinobu.command_list]).find(arguments)[0]
+        except:
+            await shinobu.send_message(message.channel, "Could not find a command with that name")
+            return
+        command = [x for x in shinobu.command_list if x['command'] == module_name][0]
+        output = "Command: **" + command['command'] + "**\n"
+        output += "Description: {}\n".format(command['description'])
+        output += "Module: **" + command['module'] + "**\n"
+        output += "Permissions: **{}**\n".format(command['permissions'] if "permissions" in command else "everyone")
+        output += "Disallowed in: **{}**\n".format(command['blacklist'] if "blacklist" in command else "None")
+        output += "Allowed in: **" + (command['whitelist'] + "**.") if "whitelist" in command else ""
+        await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Alias for .commands", ["all"])
+
+    @ShinobuCommand("Alias for .commands")
     async def help(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "!commands")
 
-    @ShinobuCommand("Lists all loaded modules", ["all"])
+    @ShinobuCommand("Lists all loaded modules")
     async def modules(message: discord.Message, arguments: str):
         output = ""
         if arguments == "available":
@@ -72,14 +78,14 @@ def register_commands(ShinobuCommand):
                 output += ("**{0}** - Version {1}\n".format(module.__name__, module.version))
         await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Tells Shinobu to reload her configuration", ["owner", "bot"])
+    @ShinobuCommand("Tells Shinobu to reload her configuration", permissions = ("Shinobu Owner"), whitelist=("bot-shitposting", "the-holodeck"))
     async def reload(message: discord.Message, arguments: str):
         start = await shinobu.send_message(message.channel, "Reloading config")
         # print("Modules loaded: ", shinobu.loaded_modules)
         mods = shinobu.load_all()
         await shinobu.edit_message(start, "Loaded {0} modules".format(mods))
 
-    @ShinobuCommand("Tells Shinobu to load or reload a specified module")
+    @ShinobuCommand("Tells Shinobu to load or reload a specified module", permissions = ("Shinobu Owner"), whitelist=("bot-shitposting", "the-holodeck"))
     async def load(message: discord.Message, arguments: str):
 
         if not shinobu.author_is_owner(message):
@@ -117,7 +123,7 @@ def register_commands(ShinobuCommand):
                         text = "Failed loading module {0}".format(module)
                     await shinobu.edit_message(start, text)
 
-    @ShinobuCommand("Tells Shinobu to load or reload a specified module")
+    @ShinobuCommand("Tells Shinobu to load or reload a specified module", permissions = ("Shinobu Owner"), whitelist=("bot-shitposting"))
     async def unload(message: discord.Message, arguments: str):
 
         if not shinobu.author_is_owner(message):
@@ -132,7 +138,7 @@ def register_commands(ShinobuCommand):
             text = "Failed unloading module {0}"
         await shinobu.edit_message(start, text.format(arguments))
 
-    @ShinobuCommand("Pulls latest from the ShinobuBot repo")
+    @ShinobuCommand("Pulls latest from the ShinobuBot repo", permissions = ("Shinobu Owner"), whitelist=("bot-shitposting"))
     async def fetch(message: discord.Message, arguments: str):
         if not shinobu.author_is_owner(message):
             await shinobu.send_message(message.channel, ">tries to fetch\n>isn't owner\n>TFW no face")

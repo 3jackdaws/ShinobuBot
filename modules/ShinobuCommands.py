@@ -60,18 +60,16 @@ config.assure("temp_channels", [])
 config.assure("check_frequency", 600)
 config.assure("prune_after_seconds", 3600*24)
 config.assure("warn_time", 600)
+config.assure("reichlist", [])
 
 prune_loop = None # type: asyncio.futures.Future
 
 
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Rolls n dice. By default, five.", ["all"])
-    async def chars(message: discord.Message, arguments: str):
-        print(message.content.encode("utf-8"))
-        await shinobu.send_message(message.channel, re.sub("!([a-z])", "\1", arguments))
 
-    @ShinobuCommand("Announces a message in the default channel of all servers")
+
+    @ShinobuCommand("Announces a message in the default channel of all servers", permissions = ("Shinobu Owner"), whitelist=("bot-shitposting"))
     async def broadcast(message:discord.Message, arguments:str):
         if not shinobu.author_is_owner(message):
             return
@@ -79,7 +77,7 @@ def register_commands(ShinobuCommand):
             if channel.is_default:
                 await shinobu.send_message(channel, arguments)
 
-    @ShinobuCommand("Posts a message in a channel that a user doesn't have access to", ['all'])
+    @ShinobuCommand("Posts a message in a channel that a user doesn't have access to", blacklist=("shitpost-central"))
     async def tell(message:discord.Message, arguments:str):
         originating_server = message.server
         given_message = arguments.rsplit(" ")[1:]
@@ -92,7 +90,7 @@ def register_commands(ShinobuCommand):
                 return
         await shinobu.send_message(message.channel, "Could not find channel {}".format(requested_channel))
 
-    @ShinobuCommand("All channels on the server", ["all"])
+    @ShinobuCommand("All channels on the server")
     async def channels(message: discord.Message, arguments: str):
         output = "**Channels on this server:**\n__Text__\n"
         for channel in message.server.channels:
@@ -104,11 +102,11 @@ def register_commands(ShinobuCommand):
                 output += (channel.name + "\n")
         await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Says what system Shinobu is running on", ['all'])
+    @ShinobuCommand("Says what system Shinobu is running on")
     async def who(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "*Tuturu!* Shinobu desu.\n[{0}]".format(shinobu.config["instance name"]))
 
-    @ShinobuCommand("Posts the link to the documentation on Github", ["all"])
+    @ShinobuCommand("Posts the link to the documentation on Github")
     async def docs(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "Documentation is located at:\nhttps://github.com/3jackdaws/ShinobuBot/wiki/Full-Command-List")
 
@@ -122,7 +120,7 @@ def register_commands(ShinobuCommand):
             if member.id == member_id:
                 shinobu.invoke(shinobu.ban(member, delete_message_days=0))
 
-    @ShinobuCommand("Posts the link to the documentation on Github")
+    @ShinobuCommand("Posts the link to the documentation on Github", permissions = ("Shinobu Owner"), whitelist=("bot-shitposting"))
     async def kick(message: discord.Message, arguments: str):
         if not shinobu.author_is_owner(message): return
         member_id = re.search("[0-9]+", message.content).group()
@@ -132,7 +130,7 @@ def register_commands(ShinobuCommand):
                 print("Kicking ",member.name)
                 shinobu.invoke(shinobu.kick(member))
 
-    @ShinobuCommand("Gets the current weather for Klamath Falls", ["all"])
+    @ShinobuCommand("Gets the current weather for Klamath Falls")
     async def weather(message: discord.Message, arguments: str):
         got_json = False
         while not got_json:
@@ -157,29 +155,7 @@ def register_commands(ShinobuCommand):
             except:
                 pass
 
-    @ShinobuCommand("Spam")
-    async def spam(message: discord.Message, arguments: str):
-        try:
-            person = message.mentions[0]
-            try:
-                amount = arguments.rsplit()[0]
-            except:
-                amount = 10
-            for i in range(amount):
-                await asyncio.sleep(1)
-                await shinobu.send_message(message.channel, arguments)
-        except:
-            pass
-
-    @ShinobuCommand("Posts the link to the documentation on Github")
-    async def cconfig(message: discord.Message, arguments: str):
-        key = arguments.rsplit()[0]
-        value = json.loads("".join(arguments.rsplit()[1:]))
-        shinobu.config[key] = value
-        await shinobu.send_message(message.channel, "Changed property {} to {}".format(key, str(shinobu.config[key])))
-        shinobu.write_config()
-
-    @ShinobuCommand(".purge @mention til_message_id")
+    @ShinobuCommand(".purge @mention til_message_id", permissions = ("Shinobu Owner"))
     async def purge(message: discord.Message, arguments: str):
         if shinobu.author_is_owner(message):
             args = arguments.rsplit()
@@ -205,7 +181,7 @@ def register_commands(ShinobuCommand):
             await asyncio.sleep(2)
             await shinobu.delete_message(mes)
 
-    @ShinobuCommand(".temp channel_name @mentions_who_can_join", ["all"])
+    @ShinobuCommand(".temp channel_name @mentions_who_can_join")
     async def temp_channel(message: discord.Message, arguments: str):
         server = message.server
         args = arguments.rsplit()
@@ -227,3 +203,22 @@ def register_commands(ShinobuCommand):
             "warn":expires - int(config['warn_time']),
             "creator":message.author.id
         })
+
+    @ShinobuCommand("Adds a text entry to the reichlist")
+    async def reichlist(message: discord.Message, arguments: str):
+        try:
+            args = arguments.rsplit(" ")
+            subcommand = args[0]
+            if subcommand == "add":
+
+                text = re.findall("(?<=\").+?(?=\")", arguments)[0]
+                config['reichlist'].append(text)
+                await shinobu.send_message(message.channel, "Added to list")
+            elif subcommand == "show":
+                output = ""
+                for item in config['reichlist']:
+                    output+= item + "\n"
+                await shinobu.send_message(message.channel, output)
+        except:
+            pass
+

@@ -55,27 +55,34 @@ def create_user(user_id):
     record = {
         "mention": "<@{}>".format(user_id),
         "id": user_id,
-        "balance": 10,
-        "holds": 0
+        "balance": 10
     }
     return record
 
-def credit_user(user, amnt):
+def transaction(from_user, to_user, amount):
+    if amount < 0:
+        return False, "Transfer balance must be positive"
+    if credit_user(from_user, -amount, commit=False):
+        if credit_user(to_user, amount, commit=False):
+            credit_user(from_user, -amount)
+            credit_user(to_user, amount)
+            return True, ""
+        else:
+            return False,
+
+
+def credit_user(user, amnt, commit=True):
+    global config
     for record in config["accounts"]:
         if record['id'] == user.id:
-            record['balance'] += amnt
-            config.save()
-
-bet_example = {
-    "game":["flip", "roll"],
-    "amount":100
-}
-
-game_return_example = {
-    "game":["flip","roll","etc"],
-    "odds":0.5,
-    "win":True
-}
+            if (record['balance'] + amnt) > 0:
+                if commit:
+                    record['balance'] += amnt
+                    config.save()
+                return True
+            return False
+    config['accounts'].append(create_user(user.id))
+    credit_user(user, amnt)
 
 
 

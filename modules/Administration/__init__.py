@@ -28,7 +28,7 @@ shinobu = None # type: Shinobu
 
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand(".filter pattern", ["owner"])
+    @ShinobuCommand(".filter pattern", permissions=("Shinobu Owner"))
     async def filter(message: discord.Message, arguments: str):
         pattern = arguments
         if len(pattern) < 2:
@@ -60,7 +60,7 @@ def register_commands(ShinobuCommand):
         name = resp.content
         regex.create_filter(name, pattern, channels, users, response)
 
-    @ShinobuCommand("Shows all filters.  .show_filters with channel_or_user_mention", ["owner"])
+    @ShinobuCommand("Shows all filters.  .show_filters with channel_or_user_mention", blacklist=("shitpost-central"))
     async def show_filters(message: discord.Message, arguments: str):
         try:
             referencing = re.findall("with \<.([0-9]+)", message.content)[0]
@@ -78,7 +78,7 @@ def register_commands(ShinobuCommand):
                     output+= "<@{}>,".format(user)
                 await shinobu.send_message(message.channel, output + "\n--\n")
 
-    @ShinobuCommand(".remove_filter name", ["owner"])
+    @ShinobuCommand(".remove_filter name", permissions=("Shinobu Owner"))
     async def remove_filter(message: discord.Message, arguments: str):
         for filter in regex.config["filters"]:
             if filter['name'] == arguments:

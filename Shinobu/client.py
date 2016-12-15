@@ -26,26 +26,32 @@ class Shinobu(discord.Client):
                 return com
         return None
 
-    def can_exec(self, user, command:dict):
-        if "owner" in command['permissions']:
-            if str(user.id) == self.config['owner']:
-                return True
-        elif "bot" in command['permissions']:
-            if str(user.id) == self.user.id:
-                return True
-        elif "all" in command['permissions']:
-            return True
-        return False
+    def can_exec(self, message:discord.Message, command:dict):
+        user = message.author
+        if "blacklist" in command:
+            if message.channel.name in command['blacklist']:
+                return False, "That command cannot be used in this channel."
+
+        if "whitelist" in command:
+            if message.channel.name not in command['whitelist']:
+                return False, "That command cannot be used in this channel."
+
+        if "permissions" in command:
+            for role in message.author.roles:
+                if role.name in command['permissions']:
+                    return True, ""
+            return False, "You do not have permissions to use that command."
+        return True, ""
 
     def exec(self, command, message:discord.Message):
         for com in self.command_list:
             if com['command'] == command:
-                print(com['command'])
-                if self.can_exec(message.author, com):
+                do_exec, reason = self.can_exec(message, com)
+                if do_exec:
                     arguments = " ".join(message.content.rsplit(" ")[1:])
                     self.invoke(com['function'](message, arguments))
                 else:
-                    self.invoke(self.send_message(message.channel, "You don't have permission to use that command"))
+                    self.invoke(self.send_message(message.channel, reason))
                 return
 
     def reload_module(self, module_name:str):
@@ -71,15 +77,17 @@ class Shinobu(discord.Client):
             print(str(e))
             return False
 
-    def Command(self, description:str, permissions = ("owner")):
+    def Command(self, description:str, **kwargs):
         def register_command(command_function):
-            self.command_list.append({
+            command = {
                 "command":command_function.__name__,
                 "function":command_function,
-                "permissions":permissions,
                 "module":command_function.__module__,
                 "description":description
-            })
+            }
+            for arg in kwargs:
+                command[arg] = kwargs[arg]
+            self.command_list.append(command)
             return command_function
         return register_command
 

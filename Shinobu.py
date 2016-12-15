@@ -24,12 +24,6 @@ async def on_message(message:discord.Message):
 
         if message.author.id == shinobu.user.id: return;
 
-        if message.content[0] is ".":
-            command = message.content.rsplit(" ")[0][1:]
-            arguments = " ".join(message.content.rsplit(" ")[1:])
-            shinobu.exec(command, message)
-            return
-
         for module in shinobu.loaded_modules:
             try:
                 if hasattr(module, "accept_message"):
@@ -41,6 +35,14 @@ async def on_message(message:discord.Message):
                 await shinobu.send_message(shinobu.get_channel(shinobu.config["owner"]),("[{0}]: " + str(e)).format(module.__name__))
                 print(sys.exc_info()[0])
                 print(sys.exc_traceback)
+
+        if message.content[0] is ".":
+            command = message.content.rsplit(" ")[0][1:]
+            arguments = " ".join(message.content.rsplit(" ")[1:])
+            shinobu.exec(command, message)
+            return
+
+
 
 
 

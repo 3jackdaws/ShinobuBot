@@ -40,7 +40,7 @@ games = {
 
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Rolls n dice. By default, five.", ["all"])
+    @ShinobuCommand("Rolls n dice. By default, five.")
     async def roll(message: discord.Message, arguments: str):
         try:
             num_dice = int(arguments)
@@ -49,7 +49,7 @@ def register_commands(ShinobuCommand):
         text, odds = simple_games.roll_dice(num_dice)
         await shinobu.send_message(message.channel, text)
 
-    @ShinobuCommand("Flips a coin", ["all"])
+    @ShinobuCommand("Flips a coin")
     async def flip(message: discord.Message, arguments: str):
         mes = await shinobu.send_message(message.channel, "Flipping a coin for {}.\n".format(arguments))
         await shinobu.send_typing(message.channel)
@@ -68,14 +68,14 @@ def register_commands(ShinobuCommand):
 
         await shinobu.send_message(message.channel, output + "```")
 
-    @ShinobuCommand("Lists purchaseable items", ['all'])
+    @ShinobuCommand("Lists purchaseable items")
     async def store(message: discord.Message, arguments: str):
         output = "Items available:\n"
         for item in sorted(betting.config['store_items'], key=lambda x:x['name']):
             output+=item['name'] + " - " + item['price'] + "\n"
         await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Displays user balance", ["all"])
+    @ShinobuCommand("Displays user balance")
     async def bal(message: discord.Message, arguments: str):
         if arguments is "":
             user_id = message.author.id
@@ -86,7 +86,7 @@ def register_commands(ShinobuCommand):
             await shinobu.send_message(message.channel, "Welcome, <@{}> you've been awarded {} protocredits.".format(user_id, 10))
         await shinobu.send_message(message.channel, "<@{}> has {} protocredits.".format(user_id, round(balance, 2)))
 
-    @ShinobuCommand(".bet amount game", ["all"])
+    @ShinobuCommand(".bet amount game")
     async def bet(message: discord.Message, arguments: str):
         args = arguments.rsplit()
         try:
@@ -96,6 +96,10 @@ def register_commands(ShinobuCommand):
             return
         try:
             game = args[1]
+            global games
+            if not game in games:
+                await shinobu.send_message(message.channel, "Valid games are {}".format(games))
+                return
         except:
             shinobu.send_message(message.channel, "The second argument must be a game.")
             return
@@ -114,13 +118,13 @@ def register_commands(ShinobuCommand):
             output = "You don't have enough protocredits to bet."
         await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Rolls n dice. By default, five.", ["owner"])
+    @ShinobuCommand("Transfers protocredits from author to mentioned.  .credit number @mention")
     async def credit(message: discord.Message, arguments: str):
         args = arguments.rsplit()
         try:
-            num = float(args[1])
+            num = float(args[0])
             user = message.mentions[0]
-            betting.credit_user(user, num)
+            betting.transaction(message.author, user, num)
             await shinobu.send_message(message.channel, "Credited <@{}> {} protocredits.".format(user.id, num))
         except:
             pass
