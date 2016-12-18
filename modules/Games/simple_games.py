@@ -29,7 +29,7 @@ def flip():
 
 def roll_dice(num_dice = 5):
     total = 0
-    odds = -1
+    odds = 0
     results = "**Total**: {}/{} [{}%]\n"
     if num_dice > 100 or num_dice < 1:
         return "You can only roll between 1 and 100 dice."
@@ -62,7 +62,7 @@ def roll_dice(num_dice = 5):
         results += "\nExceptional Roll!"
     elif percent > 69:
         results += "\nGood Roll!"
-    odds = ((percent - 51.5)/100) * max_num
+    odds = ((percent - 55)/100) * max_num
     print("ODDS:", odds)
     return results, odds
 

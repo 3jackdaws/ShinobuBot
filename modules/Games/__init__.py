@@ -2,34 +2,36 @@ from importlib import reload as reloadmod
 import Games.simple_games as simple_games
 simple_games = reloadmod(simple_games)
 import Games.betting as betting
+from .database import Account
 betting = reloadmod(betting)
 import discord
 from Shinobu.client import Shinobu
+from Shinobu.annotations import *
 import asyncio
-from math import floor
+from math import floor, trunc
 from random import randint
 
-
+SHINOBU_PROTOCREDIT_RESERVE = 1
 
 
 
 
 
 version = "1.0.0"
+type = "Module"
 
 
 
 async def accept_message(message:discord.Message):
-    chance, new = betting.get_user_balance(message.author.id)
-    chance = floor(chance + 1)**2
-    num = randint(0,chance)
-    if num == 0:
-        await shinobu.send_message(message.channel, "Congrats! You've earned a protocredit.")
-        betting.credit_user(message.author, 1)
+    pass
 
 def accept_shinobu_instance(instance):
     global shinobu
     shinobu = instance
+    db_connector = [x for x in shinobu.get_modules(type="connector") if x.__name__ == "connector_db"][0]
+    betting.set_db_mod(db_connector)
+    print(betting.db)
+    betting.assure_tables()
 
 shinobu = None # type: Shinobu
 
@@ -40,8 +42,9 @@ games = {
 
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Rolls n dice. By default, five.")
+    @ShinobuCommand
     async def roll(message: discord.Message, arguments: str):
+        roll.description = "Rolls N dice, by default, five."
         try:
             num_dice = int(arguments)
         except:
@@ -49,7 +52,7 @@ def register_commands(ShinobuCommand):
         text, odds = simple_games.roll_dice(num_dice)
         await shinobu.send_message(message.channel, text)
 
-    @ShinobuCommand("Flips a coin")
+    @ShinobuCommand
     async def flip(message: discord.Message, arguments: str):
         mes = await shinobu.send_message(message.channel, "Flipping a coin for {}.\n".format(arguments))
         await shinobu.send_typing(message.channel)
@@ -58,35 +61,40 @@ def register_commands(ShinobuCommand):
         await asyncio.sleep(1)
         await shinobu.send_message(message.channel, text[f])
 
-    @ShinobuCommand("Lists the balances of everyone")
+    @ShinobuCommand
     async def top(message: discord.Message, arguments: str):
         limit = 10
         output = "Top 10 Balances:\n```"
-        for account in sorted(betting.get_all_accounts(), key=lambda x:x['balance'], reverse=True):
-            member = message.server.get_member(account['id'])
-            output+= "{:20} Balance: [{}]\n".format(member.name, round(account['balance'], 2))
-
+        for row in betting.fetch_top_balances(limit):
+            print(row["UserID"])
+            member = message.server.get_member(str(row['UserID']))
+            output+= "{:20} Balance: [{}]\n".format(member.nick, round(row['Balance'], 2))
         await shinobu.send_message(message.channel, output + "```")
 
-    @ShinobuCommand("Lists purchaseable items")
+    @ShinobuCommand
     async def store(message: discord.Message, arguments: str):
         output = "Items available:\n"
         for item in sorted(betting.config['store_items'], key=lambda x:x['name']):
             output+=item['name'] + " - " + item['price'] + "\n"
         await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Displays user balance")
+    @ShinobuCommand
     async def bal(message: discord.Message, arguments: str):
+        await shinobu.send_typing(message.channel)
         if arguments is "":
             user_id = message.author.id
         else:
             user_id = message.mentions[0].id
-        balance, new = betting.get_user_balance(user_id)
-        if new:
-            await shinobu.send_message(message.channel, "Welcome, <@{}> you've been awarded {} protocredits.".format(user_id, 10))
-        await shinobu.send_message(message.channel, "<@{}> has {} protocredits.".format(user_id, round(balance, 2)))
+        try:
+            user_record = Account(user_id)
+        except:
+            user = message.server.get_member(user_id)
+            betting.add_account(user_id, user.name, 0)
+            betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, user_id, 10, "Enroll bonus")
+            user_record = Account(user_id)
+        await shinobu.send_message(message.channel, "<@{}> has {} protocredits.".format(user_id, round(user_record["Balance"], 2)))
 
-    @ShinobuCommand(".bet amount game")
+    @ShinobuCommand
     async def bet(message: discord.Message, arguments: str):
         args = arguments.rsplit()
         try:
@@ -103,22 +111,22 @@ def register_commands(ShinobuCommand):
         except:
             shinobu.send_message(message.channel, "The second argument must be a game.")
             return
-        try:
-            bet = betting.Bet(game, amount, message.author)
+        if betting.transaction(message.author.id, SHINOBU_PROTOCREDIT_RESERVE, amount, "BET: {}, MESSAGE: {}".format(game, message.id)):
+            await shinobu.send_message(message.channel, "Deducting {} protocredits.".format(amount))
+            await shinobu.send_typing(message.channel)
+            await asyncio.sleep(2)
             text, odds = games[game]()
-            print(odds)
             await shinobu.send_message(message.channel, text)
+            winnings = (amount * odds) + amount
 
-            won = True if odds >= 0 else False
-            amount = bet.conclude_bet(won, odds)
-            result_text = "won" if won else "lost"
-            output = "<@{}> {} **{}** protocredits.".format(message.author.id, result_text, round(amount, 2))
-        except Exception as e:
-            print(e)
+            betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, message.author.id, winnings, "BET: WINNINGS")
+
+            output = "<@{}> won back **{}** protocredits.".format(message.author.id, round(winnings, 2))
+        else:
             output = "You don't have enough protocredits to bet."
         await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Transfers protocredits from author to mentioned.  .credit number @mention")
+    @ShinobuCommand
     async def credit(message: discord.Message, arguments: str):
         args = arguments.rsplit()
         try:

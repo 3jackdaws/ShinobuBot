@@ -12,6 +12,8 @@ def accept_shinobu_instance(i):
     i.log = log
 
 version = "1.0.4"
+type = "Module"
+Description = "Logs server messages and command output"
 log_file = open("resources/serverlog.log", "a+")
 
 def log(module, msg):

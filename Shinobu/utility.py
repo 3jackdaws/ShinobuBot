@@ -7,6 +7,7 @@ class ConfigManager:
         self.config_file = config_file
         path_base = os.path.dirname(config_file)
         if not os.path.exists(path_base):
+            print("Making {}",format(path_base))
             os.makedirs(path_base)
         try:
             self.config = json.load(open(config_file, "r+"))

@@ -8,7 +8,10 @@ from subprocess import call
 def accept_shinobu_instance(instance):
     global shinobu, rcon
     shinobu = instance
-    rcon = RemoteConsole("isogen.net", 3333, "lotsofdongers")
+    try:
+        rcon = RemoteConsole("isogen.net", 3333, "lotsofdongers")
+    except:
+        pass
 
 shinobu = None # type: Shinobu
 rcon = None # type: RemoteConsole

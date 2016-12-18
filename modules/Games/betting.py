@@ -1,102 +1,66 @@
 from Shinobu.utility import ConfigManager
+from .database import Account
 
-class Bet:
-    def __init__(self, game, bet, user):
-        self.game = game
-        self.bet = bet
-        self.user = user
-        self._has_begun = False
-        self._start_bet()
+def set_db_mod(module):
+    global db
+    db = module
 
-    def conclude_bet(self, won, odds):
-        if won:
-            win_amt = self.calculate_win_amount(self.bet, odds) + self.bet
-            self.add_balance(win_amt)
-            return win_amt
-        else:
-            return self.bet
+db = None
 
-    def _start_bet(self):
-        global user_records
-        self._has_begun = True
-        if not self.user_exists():
-            config["accounts"].append(create_user(self.user.id))
-        if not get_user_balance(self.user.id)[0] > self.bet:
-            raise Exception("User does not have enough balance for that bet")
-        else:
-            self.add_balance(-self.bet)
+def assure_tables():
+    print("Assure Table")
+    print(db.assure_table)
+    db.assure_table("Accounts", (
+        "UserID BIGINT UNSIGNED",
+        "Name VARCHAR(64)",
+        "Balance DOUBLE",
+        "Frozen BOOLEAN DEFAULT FALSE",
+        "PRIMARY KEY(UserID)"
+    ,))
+
+    db.assure_table("Transactions", (
+        "TransactionID SERIAL",
+        "Time DATETIME DEFAULT CURRENT_TIMESTAMP",
+        "DebitID BIGINT UNSIGNED",
+        "CreditID BIGINT UNSIGNED",
+        "Amount DOUBLE NOT NULL",
+        "Reason VARCHAR(128)",
+        "FOREIGN KEY(DebitID) REFERENCES Accounts(UserID)",
+        "FOREIGN KEY(CreditID) REFERENCES Accounts(UserID)"
+    ,))
 
 
-    def user_exists(self):
-        for record in config["accounts"]:
-            if record['id'] == self.user.id:
-                return True
+
+def add_account(user_id, name, balance):
+    sql = "INSERT INTO Accounts (UserID, Name, Balance) VALUES (%s, %s, %s)"
+    db.execute(sql, (user_id, name, balance), show_errors=True)
+    return Account(user_id)
+
+def add_transaction_record(from_user, to_user, amount, reason=None):
+    sql = "INSERT INTO Transactions (DebitID, CreditID, Amount, Reason) VALUES (%s,%s,%s,%s)"
+    db.execute(sql, (from_user, to_user, amount, reason,), show_errors=True)
+
+def transaction(from_id, to_id, amount, reason=None):
+    if amount < 0:
+        return False
+    from_record = Account(from_id)
+    to_record = Account(to_id)
+    if from_record["Balance"] - amount > 0:
+        from_record["Balance"] -= amount
+        to_record["Balance"] += amount
+        from_record.update()
+        to_record.update()
+        add_transaction_record(from_id, to_id, amount, reason)
+        return True
+    else:
         return False
 
-
-
-    def add_balance(self, balance_amnt):
-        for record in config["accounts"]:
-            if record['id'] == self.user.id:
-                record['balance'] += balance_amnt
-
-    def calculate_win_amount(self, bet, odds):
-        return odds * bet
-
-
-
-config = ConfigManager("resources/accounts.json")
-config.assure("accounts", [])
-config.assure("store_items", [])
-
-
-
-def create_user(user_id):
-    record = {
-        "mention": "<@{}>".format(user_id),
-        "id": user_id,
-        "balance": 10
-    }
-    return record
-
-def transaction(from_user, to_user, amount):
-    if amount < 0:
-        return False, "Transfer balance must be positive"
-    if credit_user(from_user, -amount, commit=False):
-        if credit_user(to_user, amount, commit=False):
-            credit_user(from_user, -amount)
-            credit_user(to_user, amount)
-            return True, ""
-        else:
-            return False,
-
-
-def credit_user(user, amnt, commit=True):
-    global config
-    for record in config["accounts"]:
-        if record['id'] == user.id:
-            if (record['balance'] + amnt) > 0:
-                if commit:
-                    record['balance'] += amnt
-                    config.save()
-                return True
-            return False
-    config['accounts'].append(create_user(user.id))
-    credit_user(user, amnt)
-
-
-
-def get_user_balance(user_id):
-    global user_records
-    for record in config["accounts"]:
-        if record['id'] == user_id:
-            return record['balance'], False
-    config["accounts"].append(create_user(user_id))
-    return 10, True
-
-def get_all_accounts():
-    return config['accounts']
-
-
+def fetch_top_balances(num):
+    sql = "SELECT UserID, Balance " \
+          "FROM Accounts " \
+          "WHERE UserID > 3 " \
+          "ORDER BY Balance DESC"
+    cursor = db.execute(sql, show_errors=True)
+    return cursor.fetchall()
 
 

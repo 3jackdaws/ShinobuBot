@@ -1,5 +1,6 @@
 import discord
 from Shinobu.client import Shinobu
+from Shinobu.annotations import *
 import resources
 import glob
 import os
@@ -10,6 +11,8 @@ from urllib.request import urlopen
 import asyncio
 from math import floor
 from Shinobu.utility import ConfigManager
+import connector_db.highlevel as database
+
 version = "1.2.7"
 
 
@@ -25,51 +28,84 @@ def cleanup():
 
 
 async def prune_temp_channels():
+    global warned_channels
+
     while 1:
-        check_frequency = int(config["check_frequency"])
-        await asyncio.sleep(check_frequency)
-        now = int(time.time())
-        warn_time = int(config['warn_time'])
-        for channel in config["temp_channels"]:
-            expires = int(channel['expires'])
-            warn_at = channel['warn']
-            if now > expires:
-                print("Delete Channel")
-                await shinobu.delete_channel(shinobu.get_channel(channel['id']))
-                config["temp_channels"].remove(channel)
-            elif warn_at and warn_at > now:
-                channel['warn'] = None
-                await shinobu.send_message(shinobu.get_channel(channel['id']), "This channel will soon be pruned due to inactivity")
+        old_channels = get_expired_channels(600)
+        for channel in old_channels:
+            channel_id = str(channel["ChannelID"])
+            print(channel)
+            if channel_id not in warned_channels:
+                await shinobu.send_message(shinobu.get_channel(channel_id), "This channel will soon be be pruned due to inactivity")
+                author_id = channel["ChannelCreator"]
+                print(author_id)
+                user = discord.User(id=author_id)
+                await shinobu.send_message(user, "<#{}> will soon be deleted due to activity.".format(channel_id))
+                warned_channels.append(channel_id)
+            else:
+                print("Deleting channel {}".format(channel_id))
+                delete_channel(channel_id)
+                await shinobu.delete_channel(shinobu.get_channel(channel_id))
+                warned_channels.remove(channel_id)
+        await asyncio.sleep(600)
+
+
 
 def accept_shinobu_instance(instance):
-    global shinobu, prune_loop
+    global shinobu, prune_loop, database, votes, temp_channels
     shinobu = instance
     prune_loop = shinobu.invoke(prune_temp_channels())
+    database = shinobu.get_module("connector_db")
+    database.assure_table("Reichlist", (
+        "ItemID SERIAL",
+        "ItemContributor BIGINT UNSIGNED",
+        "ItemValue VARCHAR(2000)",
+        "PRIMARY KEY(ItemID)"
+        ,))
+    votes = database.DatabaseDict("Votes")
+
+    database.assure_table("CreatedChannels", (
+        "ChannelID BIGINT",
+        "ChannelCreator BIGINT UNSIGNED",
+        "ChannelLastMessage BIGINT UNSIGNED",
+        "PRIMARY KEY(ChannelID)"
+        ,))
+
+
+
+
 
 def reset_channel_timeout(channelid):
-    global config
-    for channel in config["temp_channels"]:
-        if channel['id'] == channelid:
-            print("Reset channel timeout for {}".format(channel['name']))
-            channel['expires'] = int(time.time()) + int(config['prune_after_seconds'])
+    update_channel(channelid)
+    global warned_channels
+    if channelid in warned_channels:
+        shinobu.invoke(shinobu.send_message(shinobu.get_channel(channelid), "This channel will not be deleted."))
+        warned_channels.remove(channelid)
 
 
-shinobu = None # type: Shinobu
+shinobu = None  # type: Shinobu
+votes = None  # type: database.DatabaseDict
+warned_channels = []
+Description = "General commands that do not fit into a specific module."
+type = "Module"
+
+
 config = ConfigManager("resources/ShinobuCommands.json")
 config.assure("temp_channels", [])
 config.assure("check_frequency", 600)
 config.assure("prune_after_seconds", 3600*24)
 config.assure("warn_time", 600)
-config.assure("reichlist", [])
 
 prune_loop = None # type: asyncio.futures.Future
+database = None
 
 
 
 def register_commands(ShinobuCommand):
 
 
-    @ShinobuCommand("Announces a message in the default channel of all servers", permissions = ("Shinobu Owner"), whitelist=("bot-shitposting"))
+    @ShinobuCommand
+    @permissions("Shinobu Owner")
     async def broadcast(message:discord.Message, arguments:str):
         if not shinobu.author_is_owner(message):
             return
@@ -77,7 +113,11 @@ def register_commands(ShinobuCommand):
             if channel.is_default:
                 await shinobu.send_message(channel, arguments)
 
-    @ShinobuCommand("Posts a message in a channel that a user doesn't have access to", blacklist=("shitpost-central"))
+    @ShinobuCommand
+    @permissions("@everyone")
+    @blacklist("shitpost-central")
+    @description("Posts a message to any channel, even ones that a user cannot see.")
+    @usage(".tell the-holodeck What do you think you are doing in there?")
     async def tell(message:discord.Message, arguments:str):
         originating_server = message.server
         given_message = arguments.rsplit(" ")[1:]
@@ -90,7 +130,8 @@ def register_commands(ShinobuCommand):
                 return
         await shinobu.send_message(message.channel, "Could not find channel {}".format(requested_channel))
 
-    @ShinobuCommand("All channels on the server")
+    @ShinobuCommand
+    @description("Lists all the visible and hidden channels on the server and what type of channel they are.")
     async def channels(message: discord.Message, arguments: str):
         output = "**Channels on this server:**\n__Text__\n"
         for channel in message.server.channels:
@@ -102,25 +143,28 @@ def register_commands(ShinobuCommand):
                 output += (channel.name + "\n")
         await shinobu.send_message(message.channel, output)
 
-    @ShinobuCommand("Says what system Shinobu is running on")
+    @ShinobuCommand
+    @description("Says what system Shinobu is running on")
+    @blacklist("shitpost-central")
     async def who(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "*Tuturu!* Shinobu desu.\n[{0}]".format(shinobu.config["instance name"]))
 
-    @ShinobuCommand("Posts the link to the documentation on Github")
+    @ShinobuCommand
+    @description("Posts the link to the documentation on Github")
+    @blacklist("shitpost-central")
     async def docs(message: discord.Message, arguments: str):
         await shinobu.send_message(message.channel, "Documentation is located at:\nhttps://github.com/3jackdaws/ShinobuBot/wiki/Full-Command-List")
 
-    @ShinobuCommand("Posts the link to the documentation on Github")
+    @ShinobuCommand
+    @description("Bans mentioned users")
+    @permissions("Shinobu Owner")
     async def ban(message: discord.Message, arguments: str):
-        if not shinobu.author_is_owner(): return
+        for member in message.mentions:
+            shinobu.invoke(shinobu.ban(member, delete_message_days=0))
 
-        member_id = re.search("[0-9]+").group()[0]
-        print(member_id)
-        for member in shinobu.get_all_members():
-            if member.id == member_id:
-                shinobu.invoke(shinobu.ban(member, delete_message_days=0))
-
-    @ShinobuCommand("Posts the link to the documentation on Github", permissions = ("Shinobu Owner"), whitelist=("bot-shitposting"))
+    @ShinobuCommand
+    @description("Kicks mentioned users")
+    @permissions("Shinobu Owner")
     async def kick(message: discord.Message, arguments: str):
         if not shinobu.author_is_owner(message): return
         member_id = re.search("[0-9]+", message.content).group()
@@ -130,7 +174,8 @@ def register_commands(ShinobuCommand):
                 print("Kicking ",member.name)
                 shinobu.invoke(shinobu.kick(member))
 
-    @ShinobuCommand("Gets the current weather for Klamath Falls")
+    @ShinobuCommand
+    @description("Posts current weather in klamath falls. Doesn't work on Enyo.")
     async def weather(message: discord.Message, arguments: str):
         got_json = False
         while not got_json:
@@ -155,7 +200,10 @@ def register_commands(ShinobuCommand):
             except:
                 pass
 
-    @ShinobuCommand(".purge @mention til_message_id", permissions = ("Shinobu Owner"))
+    @ShinobuCommand
+    @description("Purges messages from the mentioned person up until the given message id.")
+    @usage(".purge @everyone 43892742837734")
+    @permissions("Shinobu Owner")
     async def purge(message: discord.Message, arguments: str):
         if shinobu.author_is_owner(message):
             args = arguments.rsplit()
@@ -181,8 +229,15 @@ def register_commands(ShinobuCommand):
             await asyncio.sleep(2)
             await shinobu.delete_message(mes)
 
-    @ShinobuCommand(".temp channel_name @mentions_who_can_join")
+
+
+
+
+    @ShinobuCommand
+    @usage(".temp channel_name @mentions_who_can_join")
+    @description("Creates a temporary channel that is removed after a day of inactivity.  The channel is only visible to the author and those that are mentioned.")
     async def temp_channel(message: discord.Message, arguments: str):
+        global temp_channels
         server = message.server
         args = arguments.rsplit()
         everyone_perms = discord.PermissionOverwrite(read_messages=False)
@@ -194,31 +249,70 @@ def register_commands(ShinobuCommand):
             access.append(discord.ChannelPermissions(target=person, overwrite=member_perms))
         channel = await shinobu.create_channel(server, args[0], *access)
         await shinobu.edit_channel(channel, topic="Temporary channel")
-        global config
         expires = int(time.time()) + int(config["prune_after_seconds"])
-        config["temp_channels"].append({
-            "id":channel.id,
-            "name":channel.name,
-            "expires":expires,
-            "warn":expires - int(config['warn_time']),
-            "creator":message.author.id
-        })
 
-    @ShinobuCommand("Adds a text entry to the reichlist")
+        insert_temp_channel(channel.id, message.author.id)
+
+
+
+
+
+    def rl_add_item(user_id, text):
+        sql = "INSERT INTO Reichlist (ItemContributor, ItemValue) VALUES (%s,%s)"
+        database.execute(sql, (user_id, text,))
+
+    @ShinobuCommand
+    @description("Adds a text entry to the reichlist or shows the entire reichlist.")
+    @usage("[.reichlist add \"People doing thing that I hate.\"]", "[.reichlist show]")
     async def reichlist(message: discord.Message, arguments: str):
         try:
             args = arguments.rsplit(" ")
             subcommand = args[0]
             if subcommand == "add":
-
-                text = re.findall("(?<=\").+?(?=\")", arguments)[0]
-                config['reichlist'].append(text)
-                await shinobu.send_message(message.channel, "Added to list")
+                text = re.findall("\"[^\"^\n]+\"", arguments)
+                for item in text:
+                    rl_add_item(message.author.id, item)
+                await shinobu.send_message(message.channel, "Added {} entries.".format(len(text)))
             elif subcommand == "show":
                 output = ""
-                for item in config['reichlist']:
-                    output+= item + "\n"
+                sql = "SELECT * FROM Reichlist ORDER BY ItemID"
+                cursor = database.execute(sql) #type: pymysql.cursor
+                for item in cursor.fetchall():
+                    output += "{} - <@{}>\n\n".format(item["ItemValue"], item['ItemContributor'])
                 await shinobu.send_message(message.channel, output)
         except:
             pass
 
+    @ShinobuCommand
+    @description("Used for voting. Subcommands are [start, for, show]")
+    @usage("[.vote start \"Choice One\" \"Choice Two\" \"Choice Three\"]", "[.vote for 1]", "[.vote conclude]")
+    async def vote(message: discord.Message, arguments: str):
+        subcommand = arguments.rsplit()[0]
+        if subcommand == "start":
+            choices = re.findall("\"[^\"^\n]+\"", arguments)
+
+
+def insert_temp_channel(channel_id, channel_creator_id):
+    print("Create channel")
+    sql = "INSERT INTO CreatedChannels (ChannelID, ChannelCreator, ChannelLastMessage) VALUES(%s, %s, %s)"
+    database.execute(sql, (channel_id, channel_creator_id, str(int(time.time()))), show_errors=True)
+
+def update_channel(channel_id):
+    print("Reset channel")
+    sql = "UPDATE CreatedChannels SET ChannelLastMessage=%s WHERE ChannelID=%s"
+    database.execute(sql, (int(time.time()), channel_id), show_errors=True)
+
+def delete_channel(channel_id):
+    sql = "DELETE FROM CreatedChannels WHERE ChannelID=%s"
+    database.execute(sql, (channel_id))
+
+
+def get_expired_channels(time_since_last_message):
+    sql = "SELECT ChannelID, ChannelCreator, (%s - ChannelLastMessage) as SinceLastMessage FROM CreatedChannels WHERE %s - ChannelLastMessage > %s"
+    now = int(time.time())
+    cursor = database.execute(sql, ( now, now, time_since_last_message))
+    channels = cursor.fetchall()
+    if channels:
+        return channels
+    else:
+        return []

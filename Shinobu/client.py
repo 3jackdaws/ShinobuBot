@@ -9,7 +9,7 @@ from Shinobu.utility import ConfigManager
 class Shinobu(discord.Client):
     def __init__(self, config_directory:str):
         super(Shinobu,self).__init__()
-        self.command_list = []
+        self.commands = {}
         self.idle = False
         self.loop = asyncio.get_event_loop()
         self.config_directory = config_directory
@@ -20,39 +20,42 @@ class Shinobu(discord.Client):
         sys.path.append("./modules")
 
 
-    def get_command(self, command):
-        for com in self.command_list:
-            if com["command"] == command:
-                return com
-        return None
+    # def get_command(self, command):
+    #     if command in self.command_list:
+    #         if com["command"] == command:
+    #             return com
+    #     return None
 
-    def can_exec(self, message:discord.Message, command:dict):
+    def can_exec(self, message:discord.Message, command):
         user = message.author
-        if "blacklist" in command:
-            if message.channel.name in command['blacklist']:
+        command = command.__dict__
+        for key in command:
+            print(key)
+        if "Blacklist" in command:
+            if message.channel.name in command['Blacklist']:
                 return False, "That command cannot be used in this channel."
 
-        if "whitelist" in command:
-            if message.channel.name not in command['whitelist']:
+        if "Whitelist" in command:
+            if message.channel.name not in command['Whitelist']:
                 return False, "That command cannot be used in this channel."
 
-        if "permissions" in command:
+        if "Permissions" in command:
             for role in message.author.roles:
-                if role.name in command['permissions']:
+                if role.name in command['Permissions']:
                     return True, ""
             return False, "You do not have permissions to use that command."
         return True, ""
 
     def exec(self, command, message:discord.Message):
-        for com in self.command_list:
-            if com['command'] == command:
-                do_exec, reason = self.can_exec(message, com)
-                if do_exec:
-                    arguments = " ".join(message.content.rsplit(" ")[1:])
-                    self.invoke(com['function'](message, arguments))
-                else:
-                    self.invoke(self.send_message(message.channel, reason))
-                return
+        if command in self.commands:
+            com_func = self.commands[command]
+            do_exec, reason = self.can_exec(message, com_func)
+            if do_exec:
+                arguments = " ".join(message.content.rsplit(" ")[1:])
+                self.invoke(com_func(message, arguments))
+            else:
+                self.invoke(self.send_message(message.channel, reason))
+            return
 
     def reload_module(self, module_name:str):
         try:
@@ -77,19 +80,9 @@ class Shinobu(discord.Client):
             print(str(e))
             return False
 
-    def Command(self, description:str, **kwargs):
-        def register_command(command_function):
-            command = {
-                "command":command_function.__name__,
-                "function":command_function,
-                "module":command_function.__module__,
-                "description":description
-            }
-            for arg in kwargs:
-                command[arg] = kwargs[arg]
-            self.command_list.append(command)
-            return command_function
-        return register_command
+    def Command(self, command_function):
+        self.commands[command_function.__name__] = command_function
+        return command_function
 
     def load_safemode_mods(self):
         self.loaded_modules = []
@@ -138,6 +131,19 @@ class Shinobu(discord.Client):
 
     def stop_propagation(self, name):
         raise StopPropagationException(name)
+
+    def get_modules(self, type=None):
+        if type:
+            return [module for module in self.loaded_modules if module.type.lower() == type]
+        else:
+            return self.loaded_modules
+
+    def get_module(self, name):
+        for module in self.loaded_modules:
+            if module.__name__ == name:
+                return module
+
+
 
 
 

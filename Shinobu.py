@@ -19,8 +19,7 @@ async def on_message(message:discord.Message):
             command = message.content.rsplit(" ")[0][1:]
             arguments = " ".join(message.content.rsplit(" ")[1:])
             shinobu.exec(command, message)
-            if arguments == "rm":
-                await shinobu.delete_message(message)
+            await shinobu.delete_message(message)
 
         if message.author.id == shinobu.user.id: return;
 
@@ -38,6 +37,7 @@ async def on_message(message:discord.Message):
 
         if message.content[0] is ".":
             command = message.content.rsplit(" ")[0][1:]
+            print(command)
             arguments = " ".join(message.content.rsplit(" ")[1:])
             shinobu.exec(command, message)
             return
