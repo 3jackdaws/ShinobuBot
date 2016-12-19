@@ -60,7 +60,7 @@ class Shinobu(discord.Client):
         if command in self.commands:
             com_func = self.commands[command]
             try:
-                self.can_exec(message, com_func)
+                self.permissions_manager(com_func, message)
                 arguments = " ".join(message.content.rsplit(" ")[1:])
                 self.invoke(com_func(message, arguments))
             except PermissionError as e:
