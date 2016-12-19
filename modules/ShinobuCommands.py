@@ -9,8 +9,6 @@ import json
 import time
 from urllib.request import urlopen
 import asyncio
-from math import floor
-from Shinobu.utility import ConfigManager
 import connector_db.highlevel as database
 
 version = "1.2.7"
@@ -242,10 +240,19 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand
     @usage(".temp channel_name @mentions_who_can_join")
     @description("Creates a temporary channel that is removed after a day of inactivity.  The channel is only visible to the author and those that are mentioned.")
-    async def temp_channel(message: discord.Message, arguments: str):
+    async def addchannel(message: discord.Message, arguments: str):
         global temp_channels
         server = message.server
         args = arguments.rsplit()
+        name = args[0]
+        try:
+            type = args[1]
+            if type == "voice":
+                type = discord.ChannelType.voice
+            else:
+                type = None
+        except:
+            type = None
         everyone_perms = discord.PermissionOverwrite(read_messages=False)
         member_perms = discord.PermissionOverwrite(read_messages=True, manage_channels=True)
         everyone = discord.ChannelPermissions(target=server.default_role, overwrite=everyone_perms)
@@ -254,7 +261,7 @@ def register_commands(ShinobuCommand):
         for person in message.mentions:
             access.append(discord.ChannelPermissions(target=person, overwrite=member_perms))
         channel = await shinobu.create_channel(server, args[0], *access)
-        await shinobu.edit_channel(channel, topic="Temporary channel")
+        await shinobu.edit_channel(channel, topic="Temporary channel", type=type)
         insert_temp_channel(channel.id, message.author.id)
 
 

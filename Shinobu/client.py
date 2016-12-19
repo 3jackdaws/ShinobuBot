@@ -34,34 +34,38 @@ class Shinobu(discord.Client):
             self.__config.commit()
         return self.__config[module]
 
-    def can_exec(self, message:discord.Message, command):
-        user = message.author
+    def permissions_manager(self, command, message:discord.Message):
+        if not callable(command):
+            raise Exception("First parameter of permissions manager call must be a callable object.")
         command = command.__dict__
+        print(command)
         if "Blacklist" in command:
             if message.channel.name in command['Blacklist']:
-                return False, "That command cannot be used in this channel."
+                raise PermissionError("That command cannot be used in this channel.")
 
         if "Whitelist" in command:
             if message.channel.name not in command['Whitelist']:
-                return False, "That command cannot be used in this channel."
+                raise PermissionError("That command cannot be used in this channel.")
 
         if "Permissions" in command:
+            print("Checking permissions")
+            if message.author.id == self.owner:
+                return True
             for role in message.author.roles:
                 if role.name in command['Permissions']:
-                    return True, ""
-            return False, "You do not have permissions to use that command."
-        return True, ""
+                    return True
+            raise PermissionError("You do not have permissions to use that command.")
 
     def exec(self, command, message:discord.Message):
         if command in self.commands:
             com_func = self.commands[command]
-            do_exec, reason = self.can_exec(message, com_func)
-            if do_exec:
+            try:
+                self.can_exec(message, com_func)
                 arguments = " ".join(message.content.rsplit(" ")[1:])
                 self.invoke(com_func(message, arguments))
-            else:
-                self.invoke(self.send_message(message.channel, reason))
-            return
+            except PermissionError as e:
+                self.invoke(self.send_message(message.channel, str(e)))
+
 
     def reload_module(self, module_name:str):
 
@@ -70,8 +74,9 @@ class Shinobu(discord.Client):
             if hasattr(module, "stop_module"):
                 module.stop_module()
             self.__modules[module_name] = reloadmod(self.__modules[module_name])
+            print("Reloading {}".format(module_name))
         else:
-            print("First time load")
+            print("Loading {}".format(module_name))
             self.__modules[module_name] = __import__(module_name)
 
         if hasattr(self.__modules[module_name], "accept_shinobu_instance"):
@@ -136,10 +141,6 @@ class Shinobu(discord.Client):
         print("####  Loading Config  ####")
         print("Attempting to load [{0}] modules".format(len(self.__load_order)))
         self.commands = {}
-        while len(self.__modules) > 0:
-            module_name = self.__load_order.pop()
-            print("Unloading {}".format(module_name))
-            self.unload_module(module_name)
         self.__bootstrap()
         for module in self.__load_order:
             self.reload_module(module)

@@ -8,12 +8,14 @@ from Shinobu.utility import FuzzyMatch
 import collections
 
 async def accept_message(message:discord.Message):
-    if message.content == "!pause":
-        shinobu.idle = True
-        await shinobu.send_message(message.channel, "Paused")
-    elif message.content == "!resume":
-        shinobu.idle = False
-        await shinobu.send_message(message.channel, "Resumed")
+    global shinobu
+    if message.author.id == shinobu.owner:
+        if message.content == "!pause":
+            await shinobu.send_message(message.channel, "{}".format("Already Paused" if shinobu.idle else "Paused"))
+            shinobu.idle = True
+        elif message.content == "!resume {}".format(shinobu.instance_name):
+            await shinobu.send_message(message.channel, "{}".format("Already Active" if not shinobu.idle else "Resumed"))
+            shinobu.idle = False
     if shinobu.idle:
         shinobu.stop_propagation(__name__)
 
@@ -53,7 +55,7 @@ def register_commands(ShinobuCommand):
         try:
             command = FuzzyMatch([x for x in shinobu.commands]).find(arguments)
             if len(command) == 0:
-                module = FuzzyMatch([x.__name__ for x in shinobu.loaded_modules]).find(arguments)[0]
+                module = FuzzyMatch([x.__name__ for x in shinobu.get_modules()]).find(arguments)[0]
         except Exception as e:
             print(e)
             await shinobu.send_message(message.channel, "Could not find a command or module with that name")
@@ -65,7 +67,7 @@ def register_commands(ShinobuCommand):
             name = command[0]
         elif module:
             print(module)
-            item = [x for x in shinobu.loaded_modules if x.__name__ == module][0]
+            item = shinobu.get_module(module)
             type = item.type if hasattr(item, "type") else "Unknown"
             name = module
             additional = "!commands {}".format(module)
@@ -125,7 +127,7 @@ def register_commands(ShinobuCommand):
                 if ".py" in module:
                     load = True
                     module = os.path.basename(module)[:-3]
-                    for mod in shinobu.loaded_modules:
+                    for mod in shinobu.get_modules():
                         if mod.__name__ == module:
                             load = False
                             break

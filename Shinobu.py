@@ -37,7 +37,6 @@ async def on_message(message:discord.Message):
 
         if message.content[0] is ".":
             command = message.content.rsplit(" ")[0][1:]
-            print(command)
             arguments = " ".join(message.content.rsplit(" ")[1:])
             shinobu.exec(command, message)
             return
