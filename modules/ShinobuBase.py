@@ -98,7 +98,7 @@ def register_commands(ShinobuCommand):
                     continue
         else:
             output = "`Loaded Modules`\n"
-            for module in shinobu.loaded_modules:
+            for module in shinobu.get_modules():
                 output += ("**{0}** - Version {1}\n".format(module.__name__, module.version))
         await shinobu.send_message(message.channel, output + "\nEnter .help [module] for more info.")
 

@@ -1,5 +1,5 @@
-from Shinobu.utility import ConfigManager, FuzzyMatch
 import pymysql.cursors
+import json
 
 __all__ = [
     "execute","dbopen", "dbclose", "assure_table", "create_insert",
@@ -11,27 +11,27 @@ __all__ = [
 db = None
 
 def execute(sql, params=None, show_errors=False, auto_commit=True, cursor=None):
-    try:
-        if not cursor:
-            cursor = db.cursor()
-        cursor.execute(sql, params)
-        if auto_commit:
-            db.commit()
-        return cursor
-    except Exception as e:
-        if show_errors:
-            print(e)
-        return False
+    # try:
+    if not cursor:
+        cursor = db.cursor()
+    cursor.execute(sql, params)
+    if auto_commit:
+        db.commit()
+    return cursor
+    # except Exception as e:
+    #     if show_errors:
+    #         print(e)
+    #     return False
 
 def dbclose():
     db.close()
 
-def dbopen(password=None):
+def dbopen(host, database, user, password):
     global db
     if password:
-        db = pymysql.Connect(host="isogen.net",
-                     db="shinobu",
-                     user="shinobu",
+        db = pymysql.Connect(host=host,
+                     db=database,
+                     user=user,
                      password=password,
                      charset='utf8mb4',
                      cursorclass=pymysql.cursors.DictCursor)
@@ -49,7 +49,7 @@ class DatabaseDict(dict):
     def __init__(self, group):
         self._group = group
         kvdict = self.fetch()
-        super(DatabaseDict, self).__init__(*[{x["KVKey"]:x["KVVal"] for x in kvdict}])
+        super(DatabaseDict, self).__init__(*[{x["KVKey"]:json.loads(x["KVVal"]) for x in kvdict}])
         self.itemlist = super(DatabaseDict, self).keys()
         self._del_cache = []
 
@@ -65,9 +65,10 @@ class DatabaseDict(dict):
         sql = "INSERT INTO KVStore (KVGroup, KVKey, KVVal) " \
               "VALUES (%s,%s,%s) " \
               "ON DUPLICATE KEY UPDATE " \
-              " KVVal=%s"
+              "KVVal=%s"
         for key in self:
-            execute(sql, (self._group, key, self[key], self[key]),show_errors=True, auto_commit=False)
+            value = json.dumps(self[key])
+            execute(sql, (self._group, key, value, value),show_errors=True, auto_commit=False)
         for stmt in self._del_cache:
             execute(stmt, show_errors=True, auto_commit=False)
         db.commit()
@@ -77,11 +78,14 @@ class DatabaseDict(dict):
         self._del_cache.append("DELETE FROM KVStore WHERE KVGroup='{}' AND KVKey='{}'".format(self._group, key))
 
 def assure_table(table_name, columns:tuple):
-    sql = "CREATE TABLE {}(\n".format(table_name)
-    for column in columns:
-        sql+= " " + column + ","
-    sql = sql[:-1] + ")"
-    execute(sql, None, show_errors=True)
+    try:
+        cursor = execute("SELECT 1 FROM {} LIMIT 1".format(table_name), show_errors=True)
+    except:
+        sql = "CREATE TABLE {}(\n".format(table_name)
+        for column in columns:
+            sql+= " " + column + ","
+        sql = sql[:-1] + ")"
+        execute(sql, None, show_errors=True)
 
 def create_insert(table_name, **kwargs):
     num_args = len(kwargs)

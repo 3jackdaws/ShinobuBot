@@ -4,7 +4,7 @@ from importlib import reload as reloadmod
 import sys
 import asyncio
 import json
-from Shinobu.utility import ConfigManager
+import Shinobu.database as database
 
 class Shinobu(discord.Client):
     def __init__(self, config_directory:str):
@@ -13,24 +13,30 @@ class Shinobu(discord.Client):
         self.idle = False
         self.loop = asyncio.get_event_loop()
         self.config_directory = config_directory
-        self.loaded_modules = []
-        self.propagate = True
-        self.config = ConfigManager(config_directory + "shinobu_config.json")
+        self.__modules = {}
+        self.__load_order = []
+        self.__config = {}
         self.log = lambda x,y: print(x,y)
         sys.path.append("./modules")
+        self.login_email = ""
+        self.login_password = ""
+        self.login_token = ""
+        self.owner = ""
+        self.instance_name = ""
+        self.db = database
+        self.__bootstrap()
 
-
-    # def get_command(self, command):
-    #     if command in self.command_list:
-    #         if com["command"] == command:
-    #             return com
-    #     return None
+    def config(self, module, save=False):
+        if save:
+            self.__config.commit()
+        if not module in self.__config:
+            self.__config[module] = {}
+            self.__config.commit()
+        return self.__config[module]
 
     def can_exec(self, message:discord.Message, command):
         user = message.author
         command = command.__dict__
-        for key in command:
-            print(key)
         if "Blacklist" in command:
             if message.channel.name in command['Blacklist']:
                 return False, "That command cannot be used in this channel."
@@ -58,52 +64,87 @@ class Shinobu(discord.Client):
             return
 
     def reload_module(self, module_name:str):
-        try:
-            mod = None
-            for module in self.loaded_modules:
-                if module.__name__ == module_name:
-                    module = reloadmod(module)
-                    mod = module
-                    for command in self.command_list:
-                        if command['module'] == module_name:
-                            self.command_list.remove(command)
-            if not mod:
-                mod = __import__(module_name)
-                mod = reloadmod(mod)
-                self.loaded_modules.append(mod)
-            print("{0}, Version {1}".format(mod.__name__, mod.version))
-            mod.accept_shinobu_instance(self)
-            if hasattr(mod, "register_commands"):
-                mod.register_commands(self.Command)
-            return True
-        except ImportError as e:
-            print(str(e))
-            return False
+
+        if module_name in self.__modules:
+            module = self.__modules[module_name]
+            if hasattr(module, "stop_module"):
+                module.stop_module()
+            self.__modules[module_name] = reloadmod(self.__modules[module_name])
+        else:
+            print("First time load")
+            self.__modules[module_name] = __import__(module_name)
+
+        if hasattr(self.__modules[module_name], "accept_shinobu_instance"):
+            self.__modules[module_name].accept_shinobu_instance(self)
+
+        if hasattr(self.__modules[module_name], "register_commands"):
+            self.__modules[module_name].register_commands(self.Command)
+
+
 
     def Command(self, command_function):
         self.commands[command_function.__name__] = command_function
         return command_function
 
-    def load_safemode_mods(self):
-        self.loaded_modules = []
-        self.command_list = []
-        for modname in self.config["safemode"]:
-            self.reload_module(modname)
-        return len(self.loaded_modules)
+    def read_json(self, filename):
+        file = open(filename, "r")
+        return json.load(file)
+
+    def write_json(self, filename, object):
+        file = open(filename, "w+")
+        json.dump(object, file, indent=4)
+
+    def __bootstrap(self):
+        try:
+            self.__config = self.read_json(self.config_directory + "config.json")
+            self.login_email = self.__config["discord"]["email"]
+            self.login_password = self.__config["discord"]["password"]
+            self.login_token = self.__config["discord"]["token"]
+            self.owner = self.__config["owner"]
+            self.instance_name = self.__config["instance_name"]
+            database.dbopen(**self.__config["database"])
+            self.__config = database.DatabaseDict("ShinobuConfig")
+            if "autoload" not in self.__config:
+                self.__config["autoload"] = [
+                    "MessageLog",
+                    "ShinobuBase",
+                    "ShinobuCommands"
+                ]
+            self.__config.commit()
+            self.__load_order = self.__config["autoload"]
+
+        except FileNotFoundError as e:
+            self.write_json(self.config_directory + "config.json", {
+                "database":{
+                    "host":"localhost",
+                    "database":"shinobu",
+                    "user":"shinobu",
+                    "password":"shinobu"
+                },
+                "discord":{
+                    "email":"",
+                    "password":"",
+                    "token":""
+                },
+                "owner":"put owner id here",
+                "instance_name":"Default Instance"
+            })
+
+
 
     def load_all(self):
         print("####  Loading Config  ####")
-        print("Attempting to load [{0}] modules".format(len(self.config["modules"])))
-        self.command_list = []
-        while len(self.loaded_modules) > 0:
-            module = self.loaded_modules[0]
-            print("Unloading {}".format(module.__name__))
-            self.unload_module(module.__name__)
-        # self.loaded_modules = []
-        for module in self.config["modules"]:
+        print("Attempting to load [{0}] modules".format(len(self.__load_order)))
+        self.commands = {}
+        while len(self.__modules) > 0:
+            module_name = self.__load_order.pop()
+            print("Unloading {}".format(module_name))
+            self.unload_module(module_name)
+        self.__bootstrap()
+        for module in self.__load_order:
             self.reload_module(module)
         print("##########################\n")
-        return len(self.loaded_modules)
+        return len(self.__modules)
 
 
     def author_is_owner(self, message):
@@ -113,14 +154,11 @@ class Shinobu(discord.Client):
         self.config.save()
 
     def unload_module(self, module_name):
-        for module in self.loaded_modules:
-            if module.__name__ == module_name:
-                if hasattr(module, "cleanup"):
-                    module.cleanup()
-                self.loaded_modules.remove(module)
+        if module_name in self.__modules:
+            if hasattr(self.__modules[module_name], "stop_module"):
+                self.__modules[module_name].stop_module()
+            del self.__modules[module_name]
 
-                return True
-        return False
 
     def quick_send(self, channel:discord.Channel, message):
         print("Quick sending: [{0}] {1}".format(channel.name, message))
@@ -134,12 +172,12 @@ class Shinobu(discord.Client):
 
     def get_modules(self, type=None):
         if type:
-            return [module for module in self.loaded_modules if module.type.lower() == type]
+            return [module for module in self.__modules.values() if module.type.lower() == type]
         else:
-            return self.loaded_modules
+            return self.__modules.values()
 
     def get_module(self, name):
-        for module in self.loaded_modules:
+        for module in self.__modules.values():
             if module.__name__ == name:
                 return module
 

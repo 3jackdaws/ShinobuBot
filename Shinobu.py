@@ -23,7 +23,7 @@ async def on_message(message:discord.Message):
 
         if message.author.id == shinobu.user.id: return;
 
-        for module in shinobu.loaded_modules:
+        for module in shinobu.get_modules():
             try:
                 if hasattr(module, "accept_message"):
                     await module.accept_message(message)
@@ -50,6 +50,11 @@ async def on_message(message:discord.Message):
         print("Module", e, " has prevented message propagation")
 
 
-email = str(shinobu.config['email'])
-password = str(shinobu.config['password'])
-shinobu.run(email, password)
+
+if len(shinobu.login_token) > 20:
+    print(shinobu.login_token)
+    shinobu.run(shinobu.login_token)
+elif "@" in shinobu.login_email:
+    shinobu.run(shinobu.login_email,shinobu.login_password)
+else:
+    print("An email and password, or a login token must be set in the config")

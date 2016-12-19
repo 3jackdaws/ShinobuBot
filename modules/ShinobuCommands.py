@@ -19,12 +19,21 @@ version = "1.2.7"
 
 async def accept_message(message:discord.Message):
     reset_channel_timeout(message.channel.id)
+    await check_for_aliases(message)
 
 def cleanup():
     global prune_loop
     if hasattr(prune_loop, "cancel"):
         print("Stopping prune loop")
         prune_loop.cancel()
+
+async def check_for_aliases(message):
+    global module_config
+    if "aliases" in module_config:
+        for alias in module_config["aliases"]:
+            if alias in message.content:
+                await shinobu.send_message(message.channel, " ".join(["<@{}>".format(x) for x in module_config["aliases"][alias]]))
+
 
 
 async def prune_temp_channels():
@@ -36,9 +45,12 @@ async def prune_temp_channels():
             channel_id = str(channel["ChannelID"])
             print(channel)
             if channel_id not in warned_channels:
-                await shinobu.send_message(shinobu.get_channel(channel_id), "This channel will soon be be pruned due to inactivity")
+                try:
+                    await shinobu.send_message(shinobu.get_channel(channel_id), "This channel will soon be be pruned due to inactivity")
+                except discord.errors.InvalidArgument as e:
+                    print(e)
+                    delete_channel(channel_id)
                 author_id = channel["ChannelCreator"]
-                print(author_id)
                 user = discord.User(id=author_id)
                 await shinobu.send_message(user, "<#{}> will soon be deleted due to activity.".format(channel_id))
                 warned_channels.append(channel_id)
@@ -52,24 +64,24 @@ async def prune_temp_channels():
 
 
 def accept_shinobu_instance(instance):
-    global shinobu, prune_loop, database, votes, temp_channels
+    global shinobu, prune_loop, votes, temp_channels, module_config, database
     shinobu = instance
     prune_loop = shinobu.invoke(prune_temp_channels())
-    database = shinobu.get_module("connector_db")
-    database.assure_table("Reichlist", (
+    shinobu.db.assure_table("Reichlist", (
         "ItemID SERIAL",
         "ItemContributor BIGINT UNSIGNED",
         "ItemValue VARCHAR(2000)",
         "PRIMARY KEY(ItemID)"
         ,))
-    votes = database.DatabaseDict("Votes")
-
-    database.assure_table("CreatedChannels", (
+    votes = shinobu.db.DatabaseDict("Votes")
+    database=shinobu.db
+    shinobu.db.assure_table("CreatedChannels", (
         "ChannelID BIGINT",
         "ChannelCreator BIGINT UNSIGNED",
         "ChannelLastMessage BIGINT UNSIGNED",
         "PRIMARY KEY(ChannelID)"
         ,))
+    module_config = shinobu.config(__name__)
 
 
 
@@ -85,16 +97,12 @@ def reset_channel_timeout(channelid):
 
 shinobu = None  # type: Shinobu
 votes = None  # type: database.DatabaseDict
+module_config = {}
 warned_channels = []
 Description = "General commands that do not fit into a specific module."
 type = "Module"
 
 
-config = ConfigManager("resources/ShinobuCommands.json")
-config.assure("temp_channels", [])
-config.assure("check_frequency", 600)
-config.assure("prune_after_seconds", 3600*24)
-config.assure("warn_time", 600)
 
 prune_loop = None # type: asyncio.futures.Future
 database = None
@@ -102,8 +110,6 @@ database = None
 
 
 def register_commands(ShinobuCommand):
-
-
     @ShinobuCommand
     @permissions("Shinobu Owner")
     async def broadcast(message:discord.Message, arguments:str):
@@ -147,7 +153,7 @@ def register_commands(ShinobuCommand):
     @description("Says what system Shinobu is running on")
     @blacklist("shitpost-central")
     async def who(message: discord.Message, arguments: str):
-        await shinobu.send_message(message.channel, "*Tuturu!* Shinobu desu.\n[{0}]".format(shinobu.config["instance name"]))
+        await shinobu.send_message(message.channel, "*Tuturu!* Shinobu desu.\n[{0}]".format(shinobu.instance_name))
 
     @ShinobuCommand
     @description("Posts the link to the documentation on Github")
@@ -249,8 +255,6 @@ def register_commands(ShinobuCommand):
             access.append(discord.ChannelPermissions(target=person, overwrite=member_perms))
         channel = await shinobu.create_channel(server, args[0], *access)
         await shinobu.edit_channel(channel, topic="Temporary channel")
-        expires = int(time.time()) + int(config["prune_after_seconds"])
-
         insert_temp_channel(channel.id, message.author.id)
 
 
@@ -290,6 +294,30 @@ def register_commands(ShinobuCommand):
         subcommand = arguments.rsplit()[0]
         if subcommand == "start":
             choices = re.findall("\"[^\"^\n]+\"", arguments)
+
+    @ShinobuCommand
+    @description("Aliases a mention")
+    @usage(".alias \"some_string\" @mention")
+    async def alias(message: discord.Message, arguments: str):
+        if len(message.mentions) == 0:
+            await shinobu.send_message(message.channel, "You must mention at least on person.")
+            return
+        try:
+            alias_str = re.findall("(?<=\")[^\"^\n]+(?=\")", arguments)[0]
+            print(alias_str)
+        except:
+            await shinobu.send_message(message.channel, "You must enclose your alias in \"quotes\"")
+            return
+        config = shinobu.config(__name__)
+        if "aliases" not in config:
+            config["aliases"] = {}
+        if alias_str in config["aliases"]:
+            await shinobu.send_message(message.channel, "That alias name has already been created.")
+            return
+        config["aliases"][alias_str] = [x.id for x in message.mentions]
+        shinobu.config(__name__, save=True)
+        await shinobu.send_message(message.channel, "Alias created \"{}\"".format(alias_str))
+
 
 
 def insert_temp_channel(channel_id, channel_creator_id):

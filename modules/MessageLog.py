@@ -9,7 +9,7 @@ def register_commands(ShinobuCommand):
     pass
 
 def accept_shinobu_instance(i):
-    i.log = log
+    pass
 
 version = "1.0.4"
 type = "Module"
