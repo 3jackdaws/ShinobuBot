@@ -15,14 +15,6 @@ async def on_ready():
 @shinobu.event
 async def on_message(message:discord.Message):
     try:
-        if message.content[0] == "!" and message.author.id == shinobu.user.id:
-            command = message.content.rsplit(" ")[0][1:]
-            arguments = " ".join(message.content.rsplit(" ")[1:])
-            shinobu.exec(command, message)
-            await shinobu.delete_message(message)
-
-        if message.author.id == shinobu.user.id: return;
-
         for module in shinobu.get_modules():
             try:
                 if hasattr(module, "accept_message"):
@@ -30,15 +22,17 @@ async def on_message(message:discord.Message):
             except StopPropagationException as e:
                 raise e
             except Exception as e:
-                await shinobu.send_message(shinobu.get_channel(shinobu.config["owner"]), "There seems to be a problem with the {0} module".format(module.__name__))
-                await shinobu.send_message(shinobu.get_channel(shinobu.config["owner"]),("[{0}]: " + str(e)).format(module.__name__))
+                await shinobu.send_message(shinobu.get_channel(shinobu.owner), "There seems to be a problem with the {0} module".format(module.__name__))
+                await shinobu.send_message(shinobu.get_channel(shinobu.owner),("[{0}]: " + str(e)).format(module.__name__))
                 print(sys.exc_info()[0])
                 print(sys.exc_traceback)
 
-        if message.content[0] is ".":
+        if message.content[0] is "." or message.content[0] is "!":
             command = message.content.rsplit(" ")[0][1:]
             arguments = " ".join(message.content.rsplit(" ")[1:])
             shinobu.exec(command, message)
+            if message.content[0] is "!":
+                await shinobu.delete_message(message)
             return
 
 

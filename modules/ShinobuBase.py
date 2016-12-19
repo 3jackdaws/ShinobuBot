@@ -116,10 +116,6 @@ def register_commands(ShinobuCommand):
     @ShinobuCommand
     @permissions("Shinobu Owner")
     async def load(message: discord.Message, arguments: str):
-
-        if not shinobu.author_is_owner(message):
-            await shinobu.send_message(message.channel, ">tries to load mod\n>isn't owner")
-            return
         text = ""
         if arguments == "*":
             module_pool = glob.glob(os.path.dirname(__file__) + "/*")

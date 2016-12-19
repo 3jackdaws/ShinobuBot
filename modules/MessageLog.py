@@ -19,7 +19,7 @@ log_file = open("resources/serverlog.log", "a+")
 def log(module, msg):
     global log_file
     time = datetime.datetime.now().strftime("%H:%I:%S")
-    log_line = "[{}][{}] {}".format(time, module, msg)
+    log_line = "[{}][{}] {}\n".format(time, module, msg)
     print(log_line)
     log_file.write(log_line)
 

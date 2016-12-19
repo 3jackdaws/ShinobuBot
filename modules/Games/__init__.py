@@ -28,7 +28,7 @@ async def accept_message(message:discord.Message):
 def accept_shinobu_instance(instance):
     global shinobu
     shinobu = instance
-    db_connector = [x for x in shinobu.get_modules(type="connector") if x.__name__ == "connector_db"][0]
+    db_connector = shinobu.db
     betting.set_db_mod(db_connector)
     print(betting.db)
     betting.assure_tables()
