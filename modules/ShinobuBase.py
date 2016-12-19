@@ -7,8 +7,10 @@ import os.path
 from Shinobu.utility import FuzzyMatch
 import collections
 
-async def accept_message(message:discord.Message):
-    global shinobu
+channel_pause = None #type: discord.Channel
+
+async def on_message(message:discord.Message):
+    global shinobu, channel_pause
     if message.author.id == shinobu.owner:
         if message.content == "!pause":
             await shinobu.send_message(message.channel, "{}".format("Already Paused" if shinobu.idle else "Paused"))
@@ -16,7 +18,13 @@ async def accept_message(message:discord.Message):
         elif message.content == "!resume {}".format(shinobu.instance_name):
             await shinobu.send_message(message.channel, "{}".format("Already Active" if not shinobu.idle else "Resumed"))
             shinobu.idle = False
+        elif message.content == "!channelpause":
+            channel_pause = message.channel
+        elif message.content == "!channelresume":
+            channel_pause = None
     if shinobu.idle:
+        shinobu.stop_propagation(__name__)
+    if channel_pause and message.channel == channel_pause:
         shinobu.stop_propagation(__name__)
 
 
