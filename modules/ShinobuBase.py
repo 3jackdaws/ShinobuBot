@@ -57,7 +57,7 @@ def register_commands(ShinobuCommand):
             if len(command) == 0:
                 module = FuzzyMatch([x.__name__ for x in shinobu.get_modules()]).find(arguments)[0]
         except Exception as e:
-            print(e)
+            shinobu.log(__name__, e)
             await shinobu.send_message(message.channel, "Could not find a command or module with that name")
             return
         additional = None
@@ -66,7 +66,6 @@ def register_commands(ShinobuCommand):
             type = "Command"
             name = command[0]
         elif module:
-            print(module)
             item = shinobu.get_module(module)
             type = item.type if hasattr(item, "type") else "Unknown"
             name = module
@@ -109,7 +108,6 @@ def register_commands(ShinobuCommand):
     @permissions("Shinobu Owner")
     async def reload(message: discord.Message, arguments: str):
         start = await shinobu.send_message(message.channel, "Reloading config")
-        # print("Modules loaded: ", shinobu.loaded_modules)
         mods = shinobu.load_all()
         await shinobu.edit_message(start, "Loaded {0} modules".format(mods))
 

@@ -16,7 +16,7 @@ class Shinobu(discord.Client):
         self.__modules = {}
         self.__load_order = []
         self.__config = {}
-        self.log = lambda x,y: print(x,y)
+        self.log = lambda *x: print(*x)
         sys.path.append("./modules")
         self.login_email = ""
         self.login_password = ""
@@ -38,7 +38,6 @@ class Shinobu(discord.Client):
         if not callable(command):
             raise Exception("First parameter of permissions manager call must be a callable object.")
         command = command.__dict__
-        print(command)
         if "Blacklist" in command:
             if message.channel.name in command['Blacklist']:
                 raise PermissionError("That command cannot be used in this channel.")
@@ -48,7 +47,7 @@ class Shinobu(discord.Client):
                 raise PermissionError("That command cannot be used in this channel.")
 
         if "Permissions" in command:
-            print("Checking permissions")
+            self.log("Checking permissions")
             if message.author.id == self.owner:
                 return True
             for role in message.author.roles:
@@ -62,8 +61,10 @@ class Shinobu(discord.Client):
             try:
                 self.permissions_manager(com_func, message)
                 arguments = " ".join(message.content.rsplit(" ")[1:])
+
                 self.invoke(com_func(message, arguments))
             except PermissionError as e:
+                self.log("{} attempted to execute a command with invalid permissions.".format(message.author.nick))
                 self.invoke(self.send_message(message.channel, str(e)))
 
 
@@ -74,7 +75,7 @@ class Shinobu(discord.Client):
             if hasattr(module, "stop_module"):
                 module.stop_module()
             self.__modules[module_name] = reloadmod(self.__modules[module_name])
-            print("Reloading {}".format(module_name))
+            self.log("Reloading {}".format(module_name))
         else:
             print("Loading {}".format(module_name))
             self.__modules[module_name] = __import__(module_name)

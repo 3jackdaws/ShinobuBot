@@ -15,14 +15,18 @@ version = "1.2.7"
 
 
 
-async def accept_message(message:discord.Message):
-    reset_channel_timeout(message.channel.id)
+async def on_message(message:discord.Message):
+    if message.channel.id in channel_cache:
+        reset_channel_timeout(message.channel.id)
     await check_for_aliases(message)
+
+async def on_channel_delete(channel:discord.Channel):
+    delete_channel(channel.id)
 
 def cleanup():
     global prune_loop
     if hasattr(prune_loop, "cancel"):
-        print("Stopping prune loop")
+        shinobu.log("Stopping prune loop")
         prune_loop.cancel()
 
 async def check_for_aliases(message):
@@ -38,22 +42,22 @@ async def prune_temp_channels():
     global warned_channels
 
     while 1:
-        old_channels = get_expired_channels(600)
+        old_channels = get_expired_channels(24*3600)
         for channel in old_channels:
             channel_id = str(channel["ChannelID"])
-            print(channel)
+            shinobu.log(channel)
             if channel_id not in warned_channels:
                 try:
                     await shinobu.send_message(shinobu.get_channel(channel_id), "This channel will soon be be pruned due to inactivity")
                 except discord.errors.InvalidArgument as e:
-                    print(e)
+                    shinobu.log(e)
                     delete_channel(channel_id)
                 author_id = channel["ChannelCreator"]
                 user = discord.User(id=author_id)
                 await shinobu.send_message(user, "<#{}> will soon be deleted due to activity.".format(channel_id))
                 warned_channels.append(channel_id)
             else:
-                print("Deleting channel {}".format(channel_id))
+                shinobu.log("Deleting channel {}".format(channel_id))
                 delete_channel(channel_id)
                 await shinobu.delete_channel(shinobu.get_channel(channel_id))
                 warned_channels.remove(channel_id)
@@ -62,7 +66,7 @@ async def prune_temp_channels():
 
 
 def accept_shinobu_instance(instance):
-    global shinobu, prune_loop, votes, temp_channels, module_config, database
+    global shinobu, prune_loop, votes, temp_channels, module_config, database, channel_cache
     shinobu = instance
     prune_loop = shinobu.invoke(prune_temp_channels())
     shinobu.db.assure_table("Reichlist", (
@@ -80,6 +84,7 @@ def accept_shinobu_instance(instance):
         "PRIMARY KEY(ChannelID)"
         ,))
     module_config = shinobu.config(__name__)
+    channel_cache = get_created_channels()
 
 
 
@@ -97,6 +102,7 @@ shinobu = None  # type: Shinobu
 votes = None  # type: database.DatabaseDict
 module_config = {}
 warned_channels = []
+channel_cache = []
 Description = "General commands that do not fit into a specific module."
 type = "Module"
 
@@ -172,10 +178,10 @@ def register_commands(ShinobuCommand):
     async def kick(message: discord.Message, arguments: str):
         if not shinobu.author_is_owner(message): return
         member_id = re.search("[0-9]+", message.content).group()
-        print(member_id)
+        shinobu.log(member_id)
         for member in shinobu.get_all_members():
             if member.id == member_id:
-                print("Kicking ",member.name)
+                shinobu.log("Kicking ",member.name)
                 shinobu.invoke(shinobu.kick(member))
 
     @ShinobuCommand
@@ -211,7 +217,7 @@ def register_commands(ShinobuCommand):
     async def purge(message: discord.Message, arguments: str):
         if shinobu.author_is_owner(message):
             args = arguments.rsplit()
-            print("Purging")
+            shinobu.log("Purging")
             channel = message.channel
             who = args[0]
             ref = args[1]
@@ -238,7 +244,7 @@ def register_commands(ShinobuCommand):
 
 
     @ShinobuCommand
-    @usage(".temp channel_name @mentions_who_can_join")
+    @usage(".addchannel channel_name @mentions_who_can_join")
     @description("Creates a temporary channel that is removed after a day of inactivity.  The channel is only visible to the author and those that are mentioned.")
     async def addchannel(message: discord.Message, arguments: str):
         global temp_channels
@@ -255,9 +261,10 @@ def register_commands(ShinobuCommand):
             type = None
         everyone_perms = discord.PermissionOverwrite(read_messages=False)
         member_perms = discord.PermissionOverwrite(read_messages=True, manage_channels=True)
+        author_perms = discord.PermissionOverwrite(read_messages=True, manage_channels=True, manage_roles=True)
         everyone = discord.ChannelPermissions(target=server.default_role, overwrite=everyone_perms)
 
-        access = [discord.ChannelPermissions(target=message.author, overwrite=member_perms), everyone]
+        access = [discord.ChannelPermissions(target=message.author, overwrite=author_perms), everyone]
         for person in message.mentions:
             access.append(discord.ChannelPermissions(target=person, overwrite=member_perms))
         channel = await shinobu.create_channel(server, args[0], *access)
@@ -311,7 +318,7 @@ def register_commands(ShinobuCommand):
             return
         try:
             alias_str = re.findall("(?<=\")[^\"^\n]+(?=\")", arguments)[0]
-            print(alias_str)
+            shinobu.log(alias_str)
         except:
             await shinobu.send_message(message.channel, "You must enclose your alias in \"quotes\"")
             return
@@ -328,18 +335,24 @@ def register_commands(ShinobuCommand):
 
 
 def insert_temp_channel(channel_id, channel_creator_id):
-    print("Create channel")
+    shinobu.log("Create channel")
     sql = "INSERT INTO CreatedChannels (ChannelID, ChannelCreator, ChannelLastMessage) VALUES(%s, %s, %s)"
     database.execute(sql, (channel_id, channel_creator_id, str(int(time.time()))), show_errors=True)
 
 def update_channel(channel_id):
-    print("Reset channel")
     sql = "UPDATE CreatedChannels SET ChannelLastMessage=%s WHERE ChannelID=%s"
     database.execute(sql, (int(time.time()), channel_id), show_errors=True)
 
 def delete_channel(channel_id):
     sql = "DELETE FROM CreatedChannels WHERE ChannelID=%s"
     database.execute(sql, (channel_id))
+
+def get_created_channels():
+    sql = "SELECT ChannelID FROM CreatedChannels"
+    global channel_cache
+    results = database.execute(sql).fetchall()
+    return [ str(x["ChannelID"]) for x in results]
+
 
 
 def get_expired_channels(time_since_last_message):
