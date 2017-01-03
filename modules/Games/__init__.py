@@ -8,6 +8,7 @@ betting = reloadmod(betting)
 import discord
 from Shinobu.client import Shinobu
 from Shinobu.annotations import *
+from Shinobu.database import DatabaseDict
 import asyncio
 from random import randint
 import re
@@ -19,27 +20,37 @@ SHINOBU_PROTOCREDIT_RESERVE = 1
 version = "1.0.0"
 type = "Module"
 Description = "Contains various game-related commands."
+config = None # type: DatabaseDict
 
 
 async def on_message(message:discord.Message):
-    if message.channel.name != "shitpost-central":
+    if message.author == shinobu.user:
         return
-    num = randint(1,24)
-    print(num)
-    if num is 7:
-        await shinobu.send_message(message.channel, "Congratulations!  You've been awarded a Protocredit.")
-        if not betting.get_account(message.author.id):
-            betting.add_account(message.author.id, message.author.name, 10)
-        betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, message.author.id, 1)
+    try:
+        rate = config['genrate'][message.channel.id]
+        base = 100
+        chance = base * rate
+        num = randint(0,base)
+        print(num, chance)
+        if num < chance:
+            await shinobu.send_message(message.channel, "Congratulations!  You've been awarded a Protocredit.")
+            if not betting.get_account(message.author.id):
+                betting.add_account(message.author.id, message.author.name, 10)
+            betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, message.author.id, 1)
+    except:
+        pass
 
 
 
 def accept_shinobu_instance(instance):
-    global shinobu
+    global shinobu, config
     shinobu = instance
     db_connector = shinobu.db
     betting.set_db_mod(db_connector)
     betting.assure_tables()
+    config = db_connector.DatabaseDict("Games") # type: DatabaseDict
+    if not "genrate" in config:
+        config['genrate'] = {}
 
 shinobu = None # type: Shinobu
 
@@ -156,5 +167,28 @@ def register_commands(ShinobuCommand):
             for user in message.mentions:
                 if betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, user.id, num):
                     await shinobu.send_message(message.channel, "<@{}> tranfered <@{}> {} protocredits.".format(shinobu.user.id, user.id, num))
+        except:
+            pass
+
+    @ShinobuCommand
+    @usage(".genrate")
+    async def genrate(message: discord.Message, arguments: str):
+        global config
+        if message.channel.id in config['genrate']:
+            rate = config['genrate'][message.channel.id]
+            output = "The protocredit generation rate for this channel is {}%.".format(round(rate * 100))
+        else:
+            output = "Protocredits are not generated in this channel."
+        await shinobu.send_message(message.channel, output)
+
+    @ShinobuCommand
+    @usage(".genrate")
+    async def setgenrate(message: discord.Message, arguments: str):
+        global config
+        try:
+            rate = int(arguments.rsplit()[0])
+            config['genrate'][message.channel.id] = (rate/100)
+            config.commit()
+            await shinobu.send_message(message.channel, "Protocredit generation rate set to {}%.".format(rate))
         except:
             pass
