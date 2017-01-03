@@ -1,6 +1,6 @@
 from importlib import reload as reloadmod
 
-import simple_games
+from . import simple_games
 
 simple_games = reloadmod(simple_games)
 import Games.betting as betting
