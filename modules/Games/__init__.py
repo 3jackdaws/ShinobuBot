@@ -1,36 +1,44 @@
 from importlib import reload as reloadmod
-import Games.simple_games as simple_games
+
+import simple_games
+
 simple_games = reloadmod(simple_games)
 import Games.betting as betting
-from .database import Account
 betting = reloadmod(betting)
 import discord
 from Shinobu.client import Shinobu
 from Shinobu.annotations import *
 import asyncio
-from math import floor, trunc
 from random import randint
+import re
 
 SHINOBU_PROTOCREDIT_RESERVE = 1
 
 
 
-
-
 version = "1.0.0"
 type = "Module"
+Description = "Contains various game-related commands."
 
 
+async def on_message(message:discord.Message):
+    if message.channel.name != "shitpost-central":
+        return
+    num = randint(1,24)
+    print(num)
+    if num is 7:
+        await shinobu.send_message(message.channel, "Congratulations!  You've been awarded a Protocredit.")
+        if not betting.get_account(message.author.id):
+            betting.add_account(message.author.id, message.author.name, 10)
+        betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, message.author.id, 1)
 
-async def accept_message(message:discord.Message):
-    pass
+
 
 def accept_shinobu_instance(instance):
     global shinobu
     shinobu = instance
     db_connector = shinobu.db
     betting.set_db_mod(db_connector)
-    print(betting.db)
     betting.assure_tables()
 
 shinobu = None # type: Shinobu
@@ -82,17 +90,18 @@ def register_commands(ShinobuCommand):
     async def bal(message: discord.Message, arguments: str):
         await shinobu.send_typing(message.channel)
         if arguments is "":
-            user_id = message.author.id
+            user = message.author
         else:
-            user_id = message.mentions[0].id
-        try:
-            user_record = Account(user_id)
-        except:
-            user = message.server.get_member(user_id)
-            betting.add_account(user_id, user.name, 0)
-            betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, user_id, 10, "Enroll bonus")
-            user_record = Account(user_id)
-        await shinobu.send_message(message.channel, "<@{}> has {} protocredits.".format(user_id, round(user_record["Balance"], 2)))
+            user = message.mentions[0]
+
+        user_record = betting.get_account(user.id)
+        print(user_record)
+        if user_record is None:
+            user = message.server.get_member(user.id)
+            betting.add_account(user.id, user.name, 0)
+            betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, user.id, 10, "Enroll bonus")
+            user_record = betting.get_account(user.id)
+        await shinobu.send_message(message.channel, "<@{}> has {} protocredits.".format(user.id, round(user_record["Balance"], 2)))
 
     @ShinobuCommand
     async def bet(message: discord.Message, arguments: str):
@@ -106,7 +115,7 @@ def register_commands(ShinobuCommand):
             game = args[1]
             global games
             if not game in games:
-                await shinobu.send_message(message.channel, "Valid games are {}".format(games))
+                await shinobu.send_message(message.channel, "Valid games are {}".format([x for x in games]))
                 return
         except:
             shinobu.send_message(message.channel, "The second argument must be a game.")
@@ -127,16 +136,25 @@ def register_commands(ShinobuCommand):
         await shinobu.send_message(message.channel, output)
 
     @ShinobuCommand
-    async def credit(message: discord.Message, arguments: str):
+    @usage(".transfer num @mention")
+    async def transfer(message: discord.Message, arguments: str):
         args = arguments.rsplit()
         try:
             num = float(args[0])
             user = message.mentions[0]
-            betting.transaction(message.author, user, num)
-            await shinobu.send_message(message.channel, "Credited <@{}> {} protocredits.".format(user.id, num))
+            betting.transaction(message.author.id, user.id, num)
+            await shinobu.send_message(message.channel, "<@{}> tranfered <@{}> {} protocredits.".format(message.author.id, user.id, num))
         except:
             pass
 
-
-
-
+    @ShinobuCommand
+    @usage(".credit num @mention1 @mention2")
+    async def credit(message: discord.Message, arguments: str):
+        args = arguments.rsplit()
+        try:
+            num = float(args[0])
+            for user in message.mentions:
+                if betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, user.id, num):
+                    await shinobu.send_message(message.channel, "<@{}> tranfered <@{}> {} protocredits.".format(shinobu.user.id, user.id, num))
+        except:
+            pass

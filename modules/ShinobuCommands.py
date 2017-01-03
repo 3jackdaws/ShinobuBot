@@ -9,7 +9,6 @@ import json
 import time
 from urllib.request import urlopen
 import asyncio
-import connector_db.highlevel as database
 
 version = "1.2.7"
 
@@ -18,7 +17,7 @@ version = "1.2.7"
 async def on_message(message:discord.Message):
     if message.channel.id in channel_cache:
         reset_channel_timeout(message.channel.id)
-    await check_for_aliases(message)
+    # await check_for_aliases(message)
 
 async def on_channel_delete(channel:discord.Channel):
     delete_channel(channel.id)
@@ -244,21 +243,13 @@ def register_commands(ShinobuCommand):
 
 
     @ShinobuCommand
-    @usage(".addchannel channel_name @mentions_who_can_join")
-    @description("Creates a temporary channel that is removed after a day of inactivity.  The channel is only visible to the author and those that are mentioned.")
-    async def addchannel(message: discord.Message, arguments: str):
+    @usage(".createchannel channel_name @mentions_who_can_join")
+    @description("Creates a new channel.  The channel is only visible to the author and those that are mentioned.")
+    async def createchannel(message: discord.Message, arguments: str):
         global temp_channels
         server = message.server
         args = arguments.rsplit()
         name = args[0]
-        try:
-            type = args[1]
-            if type == "voice":
-                type = discord.ChannelType.voice
-            else:
-                type = None
-        except:
-            type = None
         everyone_perms = discord.PermissionOverwrite(read_messages=False)
         member_perms = discord.PermissionOverwrite(read_messages=True, manage_channels=True)
         author_perms = discord.PermissionOverwrite(read_messages=True, manage_channels=True, manage_roles=True)
@@ -268,11 +259,7 @@ def register_commands(ShinobuCommand):
         for person in message.mentions:
             access.append(discord.ChannelPermissions(target=person, overwrite=member_perms))
         channel = await shinobu.create_channel(server, args[0], *access)
-        await shinobu.edit_channel(channel, topic="Temporary channel", type=type)
-        insert_temp_channel(channel.id, message.author.id)
-
-
-
+        await shinobu.edit_channel(channel, topic="What is this channel about?")
 
 
     def rl_add_item(user_id, text):
@@ -332,7 +319,17 @@ def register_commands(ShinobuCommand):
         shinobu.config(__name__, save=True)
         await shinobu.send_message(message.channel, "Alias created \"{}\"".format(alias_str))
 
-
+    # @ShinobuCommand
+    # @description("Calls a procedure")
+    # @usage(".call module.procedure arg1 arg2 arg3")
+    # async def call(message: discord.Message, arguments: str):
+    #     site = urlopen("https://isogen.net/shinobu/procedure/" + "/".join(arguments.rsplit(",")) + "/")
+    #     try:
+    #         output = site.read().decode("utf-8")
+    #         await shinobu.send_message(message.channel, output)
+    #     except Exception as e:
+    #         print(e)
+    #         print(site.read())
 
 def insert_temp_channel(channel_id, channel_creator_id):
     shinobu.log("Create channel")

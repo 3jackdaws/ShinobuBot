@@ -22,14 +22,6 @@ def repo_is_valid(reponame):
     except:
         return False
 
-def gen_pie_chart(data):
-    fig = {
-        'data': [{'labels': ['Residential', 'Non-Residential', 'Utility'],
-                  'values': [19, 26, 55],
-                  'type': 'pie'}],
-        'layout': {'title': 'Forcasted 2014 U.S. PV Installations by Market Segment'}
-    }
-    plot.iplot(fig)
 
 def get_contributions(reponame, duration):
     baseurl = "https://api.github.com/repos/"

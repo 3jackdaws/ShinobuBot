@@ -1,15 +1,14 @@
 from Shinobu.utility import ConfigManager
-from .database import Account
+import Shinobu.database
+import pymysql.cursors
 
 def set_db_mod(module):
     global db
     db = module
 
-db = None
+db = None # type: Shinobu.database
 
 def assure_tables():
-    print("Assure Table")
-    print(db.assure_table)
     db.assure_table("Accounts", (
         "UserID BIGINT UNSIGNED",
         "Name VARCHAR(64)",
@@ -31,25 +30,50 @@ def assure_tables():
 
 
 
+def get_account(user_id):
+    sql = "SELECT * FROM Accounts WHERE UserID=%s"
+    results = db.execute(sql, (user_id), show_errors=True)
+    if results:
+        return results.fetchone()
+    else:
+        return None
+
+def save_account(account:dict):
+    pass
+
+def execute_transaction(from_id, to_id, amount):
+    cursor = db.db.cursor() #type: pymysql.cursors.Cursor
+    sql = "SELECT (Balance - %s) >= 0 as CanTransfer FROM Accounts WHERE UserID = %s"
+    cursor.execute(sql, (amount, from_id))
+    results = cursor.fetchone()
+    if results and results['CanTransfer']:
+        try:
+            sql = "UPDATE Accounts SET Balance = (Balance - %s) WHERE UserID = %s"
+            cursor.execute(sql, (amount, from_id))
+            sql = "UPDATE Accounts SET Balance = (Balance + %s) WHERE UserID = %s"
+            cursor.execute(sql, (amount, to_id))
+            db.db.commit()
+            return True
+        except:
+            return False
+    else:
+        print(results)
+        return False
+
+
 def add_account(user_id, name, balance):
     sql = "INSERT INTO Accounts (UserID, Name, Balance) VALUES (%s, %s, %s)"
     db.execute(sql, (user_id, name, balance), show_errors=True)
-    return Account(user_id)
+    return get_account(user_id)
 
 def add_transaction_record(from_user, to_user, amount, reason=None):
     sql = "INSERT INTO Transactions (DebitID, CreditID, Amount, Reason) VALUES (%s,%s,%s,%s)"
     db.execute(sql, (from_user, to_user, amount, reason,), show_errors=True)
 
+
+
 def transaction(from_id, to_id, amount, reason=None):
-    if amount < 0:
-        return False
-    from_record = Account(from_id)
-    to_record = Account(to_id)
-    if from_record["Balance"] - amount > 0:
-        from_record["Balance"] -= amount
-        to_record["Balance"] += amount
-        from_record.update()
-        to_record.update()
+    if execute_transaction(from_id, to_id, amount):
         add_transaction_record(from_id, to_id, amount, reason)
         return True
     else:

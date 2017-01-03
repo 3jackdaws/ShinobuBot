@@ -69,22 +69,26 @@ class Shinobu(discord.Client):
 
 
     def reload_module(self, module_name:str):
+        try:
+            if module_name in self.__modules:
+                module = self.__modules[module_name]
+                if hasattr(module, "stop_module"):
+                    module.stop_module()
+                self.__modules[module_name] = reloadmod(self.__modules[module_name])
+                self.log("Reloading {}".format(module_name))
+            else:
+                print("Loading {}".format(module_name))
+                self.__modules[module_name] = __import__(module_name)
 
-        if module_name in self.__modules:
-            module = self.__modules[module_name]
-            if hasattr(module, "stop_module"):
-                module.stop_module()
-            self.__modules[module_name] = reloadmod(self.__modules[module_name])
-            self.log("Reloading {}".format(module_name))
-        else:
-            print("Loading {}".format(module_name))
-            self.__modules[module_name] = __import__(module_name)
+            if hasattr(self.__modules[module_name], "accept_shinobu_instance"):
+                self.__modules[module_name].accept_shinobu_instance(self)
 
-        if hasattr(self.__modules[module_name], "accept_shinobu_instance"):
-            self.__modules[module_name].accept_shinobu_instance(self)
-
-        if hasattr(self.__modules[module_name], "register_commands"):
-            self.__modules[module_name].register_commands(self.Command)
+            if hasattr(self.__modules[module_name], "register_commands"):
+                self.__modules[module_name].register_commands(self.Command)
+            return True
+        except Exception as e:
+            self.log(e)
+            return False
 
 
 

@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 import json
 import discord
 from Shinobu.client import Shinobu
+from Shinobu.annotations import *
 
 def get_ud_definition(word):
     query = urlencode({"term":word})
@@ -18,7 +19,8 @@ shinobu = None # type: Shinobu
 version = "1.0.0"
 
 def register_commands(ShinobuCommand):
-    @ShinobuCommand("Rolls n dice. By default, five.", ["all"])
+    @ShinobuCommand
+    @description("Looks up the word or phrase on urban dictionary")
     async def ud(message: discord.Message, arguments: str):
         definition = get_ud_definition(arguments)
         await shinobu.send_message(message.channel, "**{}**\n{}".format(arguments,definition))

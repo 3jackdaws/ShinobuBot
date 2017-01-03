@@ -146,9 +146,9 @@ def register_commands(ShinobuCommand):
                 if arguments.lower() in module.lower():
                     start = await shinobu.send_message(message.channel, "Loading module {0}".format(module))
                     if shinobu.reload_module(module):
-                        if module not in shinobu.config["modules"]:
-                            shinobu.config["modules"].append(module)
-                            shinobu.write_config()
+                        if module not in shinobu.config("autoload"):
+                            shinobu.config("autoload").append(module)
+                            shinobu.config("autoload", save=True)
                         text = "Loaded module {0}".format(module)
                     else:
                         text = "Failed loading module {0}".format(module)
