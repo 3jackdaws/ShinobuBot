@@ -6,6 +6,7 @@ import asyncio
 import os.path
 from Shinobu.utility import FuzzyMatch
 import collections
+import re
 
 channel_pause = None #type: discord.Channel
 
@@ -179,6 +180,27 @@ def register_commands(ShinobuCommand):
         from subprocess import check_output
         out = check_output(["git", "pull"]).decode("utf-8")
         await shinobu.send_message(message.channel, out)
+
+    @ShinobuCommand
+    @permissions("Shinobu Owner")
+    async def set(message: discord.Message, arguments: str):
+        try:
+            key = arguments.rsplit()[0]
+            value = " ".join(arguments.rsplit()[1:])
+            shinobu.config[key] = value
+            shinobu.config.commit()
+        except KeyError as e:
+            await shinobu.send_message(message.channel, "Could not find key {}".format(e))
+
+    @ShinobuCommand
+    @permissions("Shinobu Owner")
+    async def get(message: discord.Message, arguments: str):
+        try:
+
+            await shinobu.send_message(message.channel, shinobu.config[arguments])
+        except KeyError as e:
+            await shinobu.send_message(message.channel, "Could not find key {}".format(e))
+
 
 def accept_shinobu_instance(instance):
     global shinobu

@@ -82,7 +82,7 @@ def accept_shinobu_instance(instance):
         "ChannelLastMessage BIGINT UNSIGNED",
         "PRIMARY KEY(ChannelID)"
         ,))
-    module_config = shinobu.config(__name__)
+    module_config = shinobu.config[__name__]
     channel_cache = get_created_channels()
 
 

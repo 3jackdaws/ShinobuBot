@@ -15,7 +15,7 @@ class Shinobu(discord.Client):
         self.config_directory = config_directory
         self.__modules = {}
         self.__load_order = []
-        self.__config = {}
+        self.config = {}
         self.log = lambda *x: print(*x)
         sys.path.append("./modules")
         self.login_email = ""
@@ -26,13 +26,7 @@ class Shinobu(discord.Client):
         self.db = database
         self.__bootstrap()
 
-    def config(self, module, save=False):
-        if save:
-            self.__config.commit()
-        if not module in self.__config:
-            self.__config[module] = {}
-            self.__config.commit()
-        return self.__config[module]
+
 
     def permissions_manager(self, command, message:discord.Message):
         if not callable(command):
@@ -106,22 +100,22 @@ class Shinobu(discord.Client):
 
     def __bootstrap(self):
         try:
-            self.__config = self.read_json(self.config_directory + "config.json")
-            self.login_email = self.__config["discord"]["email"]
-            self.login_password = self.__config["discord"]["password"]
-            self.login_token = self.__config["discord"]["token"]
-            self.owner = self.__config["owner"]
-            self.instance_name = self.__config["instance_name"]
-            database.dbopen(**self.__config["database"])
-            self.__config = database.DatabaseDict("ShinobuConfig")
-            if "autoload" not in self.__config:
-                self.__config["autoload"] = [
+            self.config = self.read_json(self.config_directory + "config.json")
+            self.login_email = self.config["discord"]["email"]
+            self.login_password = self.config["discord"]["password"]
+            self.login_token = self.config["discord"]["token"]
+            self.owner = self.config["owner"]
+            self.instance_name = self.config["instance_name"]
+            database.dbopen(**self.config["database"])
+            self.config = database.DatabaseDict("ShinobuConfig")
+            if "autoload" not in self.config:
+                self.config["autoload"] = [
                     "MessageLog",
                     "ShinobuBase",
                     "ShinobuCommands"
                 ]
-            self.__config.commit()
-            self.__load_order = self.__config["autoload"]
+            self.config.commit()
+            self.__load_order = self.config["autoload"]
 
         except FileNotFoundError as e:
             self.write_json(self.config_directory + "config.json", {
