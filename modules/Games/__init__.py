@@ -182,7 +182,9 @@ def register_commands(ShinobuCommand):
         await shinobu.send_message(message.channel, output)
 
     @ShinobuCommand
-    @usage(".genrate")
+    @usage(".setgenrate 50")
+    @description("Sets the protocredit generation rate for the current channel.")
+    @permissions("Shinobu Owner")
     async def setgenrate(message: discord.Message, arguments: str):
         global config
         try:
