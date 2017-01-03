@@ -154,7 +154,7 @@ class Shinobu(discord.Client):
 
 
     def author_is_owner(self, message):
-        return message.author.id == self.config["owner"]
+        return message.author.id == self.owner
 
     def write_config(self):
         self.config.save()
