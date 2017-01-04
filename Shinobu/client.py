@@ -42,8 +42,8 @@ class Shinobu(discord.Client):
 
         if "Permissions" in command:
             self.log("Checking permissions")
-            if message.author.id == self.owner:
-                return True
+            # if message.author.id == self.owner:
+            #     return True
             for role in message.author.roles:
                 if role.name in command['Permissions']:
                     return True
@@ -51,6 +51,7 @@ class Shinobu(discord.Client):
 
     def exec(self, command, message:discord.Message):
         if command in self.commands:
+            print(command)
             com_func = self.commands[command]
             try:
                 self.permissions_manager(com_func, message)
