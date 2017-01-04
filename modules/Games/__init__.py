@@ -32,8 +32,13 @@ async def on_message(message:discord.Message):
         chance = base * rate
         num = randint(0,base)
         print(num, chance)
-        if num < chance:
-            await shinobu.send_message(message.channel, "Congratulations!  You've been awarded a Protocredit.")
+        if num < int(chance):
+            try:
+                await shinobu.add_reaction(message, "💳")
+            except Exception as e:
+                print(e)
+            print("Credit")
+            # await shinobu.send_message(message.channel, "Congratulations!  You've been awarded a Protocredit.")
             if not betting.get_account(message.author.id):
                 betting.add_account(message.author.id, message.author.name, 10)
             betting.transaction(SHINOBU_PROTOCREDIT_RESERVE, message.author.id, 1)
