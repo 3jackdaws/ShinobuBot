@@ -12,7 +12,11 @@ import asyncio
 
 version = "1.2.7"
 
-
+async def on_reaction_add(reaction:discord.Reaction, user:discord.User):
+    message = reaction.message # type: discord.Message
+    for react in message.reactions:
+        if react.count >= 5:
+            await shinobu.pin_message(message)
 
 async def on_message(message:discord.Message):
     if message.channel.id in channel_cache:
@@ -296,40 +300,6 @@ def register_commands(ShinobuCommand):
         if subcommand == "start":
             choices = re.findall("\"[^\"^\n]+\"", arguments)
 
-    @ShinobuCommand
-    @description("Aliases a mention")
-    @usage(".alias \"some_string\" @mention")
-    async def alias(message: discord.Message, arguments: str):
-        if len(message.mentions) == 0:
-            await shinobu.send_message(message.channel, "You must mention at least on person.")
-            return
-        try:
-            alias_str = re.findall("(?<=\")[^\"^\n]+(?=\")", arguments)[0]
-            shinobu.log(alias_str)
-        except:
-            await shinobu.send_message(message.channel, "You must enclose your alias in \"quotes\"")
-            return
-        config = shinobu.config(__name__)
-        if "aliases" not in config:
-            config["aliases"] = {}
-        if alias_str in config["aliases"]:
-            await shinobu.send_message(message.channel, "That alias name has already been created.")
-            return
-        config["aliases"][alias_str] = [x.id for x in message.mentions]
-        shinobu.config(__name__, save=True)
-        await shinobu.send_message(message.channel, "Alias created \"{}\"".format(alias_str))
-
-    # @ShinobuCommand
-    # @description("Calls a procedure")
-    # @usage(".call module.procedure arg1 arg2 arg3")
-    # async def call(message: discord.Message, arguments: str):
-    #     site = urlopen("https://isogen.net/shinobu/procedure/" + "/".join(arguments.rsplit(",")) + "/")
-    #     try:
-    #         output = site.read().decode("utf-8")
-    #         await shinobu.send_message(message.channel, output)
-    #     except Exception as e:
-    #         print(e)
-    #         print(site.read())
 
 def insert_temp_channel(channel_id, channel_creator_id):
     shinobu.log("Create channel")

@@ -181,6 +181,15 @@ class Shinobu(discord.Client):
             if module.__name__ == name:
                 return module
 
+    async def module_callback(self, callback_name, *payload):
+        for module in self.__modules.values():
+
+            if hasattr(module, callback_name):
+                print("mod has react")
+                try:
+                    await module.__getattribute__(callback_name)(*payload)
+                except Exception as e:
+                    print(e)
 
 
 

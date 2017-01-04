@@ -11,6 +11,10 @@ async def on_ready():
     print('-------------------------')
     shinobu.load_all()
 
+@shinobu.event
+async def on_reaction_add(reaction, user):
+    print("reaction")
+    await shinobu.module_callback("on_reaction_add", reaction, user)
 
 @shinobu.event
 async def on_channel_delete(channel:discord.Channel):
