@@ -5,7 +5,7 @@ import inspect
 
 async def on_message(message:discord.Message):
     time = datetime.datetime.now().strftime("%b %d, %Y - %H:%I:%S")
-    log("\033[36m{}\033[0m - {}\n{}\n".format(message.author.name if message.author.nick is None else message.author.nick, time, message.content), channel=message.channel.name)
+    log("\033[36m{}\033[0m - {}\n{}\n".format(message.author.name, time, message.content), channel=message.channel.name)
 
 def register_commands(ShinobuCommand):
     pass
