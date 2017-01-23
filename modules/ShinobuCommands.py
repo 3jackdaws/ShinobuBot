@@ -9,6 +9,7 @@ import json
 import time
 from urllib.request import urlopen
 import asyncio
+from subprocess import check_output
 
 version = "1.2.7"
 
@@ -71,7 +72,7 @@ async def prune_temp_channels():
 def accept_shinobu_instance(instance):
     global shinobu, prune_loop, votes, temp_channels, module_config, database, channel_cache
     shinobu = instance
-    prune_loop = shinobu.invoke(prune_temp_channels())
+    # prune_loop = shinobu.invoke(prune_temp_channels())
     shinobu.db.assure_table("Reichlist", (
         "ItemID SERIAL",
         "ItemContributor BIGINT UNSIGNED",
@@ -80,12 +81,12 @@ def accept_shinobu_instance(instance):
         ,))
     votes = shinobu.db.DatabaseDict("Votes")
     database=shinobu.db
-    shinobu.db.assure_table("CreatedChannels", (
-        "ChannelID BIGINT",
-        "ChannelCreator BIGINT UNSIGNED",
-        "ChannelLastMessage BIGINT UNSIGNED",
-        "PRIMARY KEY(ChannelID)"
-        ,))
+    # shinobu.db.assure_table("CreatedChannels", (
+    #     "ChannelID BIGINT",
+    #     "ChannelCreator BIGINT UNSIGNED",
+    #     "ChannelLastMessage BIGINT UNSIGNED",
+    #     "PRIMARY KEY(ChannelID)"
+    #     ,))
     module_config = shinobu.config[__name__]
     channel_cache = get_created_channels()
 
@@ -299,6 +300,21 @@ def register_commands(ShinobuCommand):
         subcommand = arguments.rsplit()[0]
         if subcommand == "start":
             choices = re.findall("\"[^\"^\n]+\"", arguments)
+
+    @ShinobuCommand
+    @description("Execute a Shinobu script")
+    @usage(".call script_name")
+    async def call(message: discord.Message, arguments: str):
+        args = arguments.rsplit()
+        script_name = args[0]
+        script_arguments = args[1:]
+        script_path_base = shinobu.config_directory + "scripts/"
+        try:
+            output = check_output([script_path_base + script_name, *script_arguments]).decode('utf-8')
+        except FileNotFoundError as e:
+            output = "No such procedure: '{}'".format(script_name)
+        await shinobu.send_message(message.channel, output)
+
 
 
 def insert_temp_channel(channel_id, channel_creator_id):

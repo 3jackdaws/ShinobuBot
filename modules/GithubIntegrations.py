@@ -100,7 +100,7 @@ def register_commands(ShinobuCommand):
         await shinobu.send_message(message.channel, "Unknown repo: {}".format(att_repo))
 
     @ShinobuCommand
-    async def remove_configitory(message: discord.Message, arguments: str):
+    async def removerepo(message: discord.Message, arguments: str):
         global config
         att_repo = arguments
         for repo in config:
@@ -115,6 +115,14 @@ def register_commands(ShinobuCommand):
                         return
                     else:
                         await shinobu.send_message(message.channel, "Ok :^)")
+
+    @ShinobuCommand
+    async def listrepos(message: discord.Message, arguments: str):
+        output = ""
+        for repo in config['repos']:
+            output += "{} - Registered by <@{}>".format(repo, config['repos'][repo]['owner'])
+
+        await shinobu.send_message(message.channel, output)
 
 async def accept_message(message:discord.Message):
     pass
