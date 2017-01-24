@@ -303,17 +303,28 @@ def register_commands(ShinobuCommand):
 
     @ShinobuCommand
     @description("Execute a Shinobu script")
-    @usage(".call script_name")
+    @usage("[.call script_name] [.call list]")
     async def call(message: discord.Message, arguments: str):
         args = arguments.rsplit()
         script_name = args[0]
         script_arguments = args[1:]
         script_path_base = shinobu.config_directory + "scripts/"
+        script_perms = None
         try:
-            output = check_output([script_path_base + script_name, *script_arguments]).decode('utf-8')
-        except FileNotFoundError as e:
-            output = "No such procedure: '{}'".format(script_name)
-        await shinobu.send_message(message.channel, output)
+            text = open(script_path_base + script_name, "r").read()
+            script_perms = re.findall("(?<=#permissions:).+", text)[0]
+        except Exception as e:
+            print(e)
+            script_perms = "Shinobu Owner"
+        for role in message.author.roles:
+            if role.name in script_perms:
+                try:
+                    output = check_output([script_path_base + script_name, "|".join([x.name for x in message.author.roles]),*script_arguments]).decode('utf-8')
+                except FileNotFoundError as e:
+                    output = "No such procedure: '{}'".format(script_name)
+                await shinobu.send_message(message.channel, output)
+                return
+        await shinobu.send_message(message.channel, "You must have one of the following roles to call this procedure: {}".format(script_perms))
 
 
 
