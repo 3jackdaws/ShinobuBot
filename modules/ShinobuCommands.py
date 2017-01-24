@@ -319,7 +319,7 @@ def register_commands(ShinobuCommand):
         for role in message.author.roles:
             if role.name in script_perms:
                 try:
-                    output = check_output([script_path_base + script_name, "|".join([x.name for x in message.author.roles]),*script_arguments]).decode('utf-8')
+                    output = check_output([script_path_base + script_name, *script_arguments]).decode('utf-8')
                 except FileNotFoundError as e:
                     output = "No such procedure: '{}'".format(script_name)
                 await shinobu.send_message(message.channel, output)
