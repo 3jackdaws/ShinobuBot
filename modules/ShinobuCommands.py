@@ -9,15 +9,22 @@ import json
 import time
 from urllib.request import urlopen
 import asyncio
-from subprocess import check_output
+from subprocess import check_output, Popen, PIPE
 
 version = "1.2.7"
 
+reactions = {}
+
 async def on_reaction_add(reaction:discord.Reaction, user:discord.User):
     message = reaction.message # type: discord.Message
-    for react in message.reactions:
-        if react.count >= 5:
-            await shinobu.pin_message(message)
+    global reactions
+    if message.id not in reactions:
+        reactions[message.id] = []
+    if user.id not in reactions[message.id]:
+        reactions[message.id].append(user.id)
+    print(len(reactions[message.id]))
+    if len(reactions[message.id]) == 5:
+        await shinobu.pin_message(message)
 
 async def on_message(message:discord.Message):
     if message.channel.id in channel_cache:
@@ -327,6 +334,9 @@ def register_commands(ShinobuCommand):
         await shinobu.send_message(message.channel, "You must have one of the following roles to call this procedure: {}".format(script_perms))
 
 
+
+
+shell = None # type: Popen
 
 def insert_temp_channel(channel_id, channel_creator_id):
     shinobu.log("Create channel")
